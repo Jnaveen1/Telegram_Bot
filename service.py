@@ -16,25 +16,92 @@ def process_request(data):
     # ---------------- ADD PRODUCTION ----------------
 
     if intent == "add_production":
+        if shed is None:
+            return (
+                "Please specify the shed number.\n"
+                "Example: 'Shed 1 produced 10 eggs'."
+            )
+
         quantity = data["quantity"]
-        add_production(shed, quantity)
+
+        report_date = data.get("date")
+
+        if report_date is None or report_date == "today":
+            report_date = str(date.today())
+
+        elif report_date == "yesterday":
+            report_date = str(date.today() - timedelta(days=1))
+        add_production(shed, quantity, report_date) 
         return f"✅ Added {quantity} produced eggs to Shed {shed}"
 
     # ---------------- ADD BROKEN ----------------
 
     elif intent == "add_broken":
-        quantity = data["quantity"]
-        add_broken(shed, quantity)
-        return f"✅ Recorded {quantity} broken eggs in Shed {shed}"
 
+        quantity = data["quantity"]
+
+        report_date = data.get("date")
+
+        if report_date is None or report_date == "today":
+            report_date = str(date.today())
+
+        elif report_date == "yesterday":
+            report_date = str(date.today() - timedelta(days=1))
+
+        record = get_summary(shed, report_date)
+
+        if record is None:
+            return f"No production record found for Shed {shed} on {report_date}."
+
+        available = record.produced - record.broken - record.sold
+
+        if quantity > available:
+            return (
+                f"❌ Cannot record {quantity} broken eggs.\n"
+                f"Only {available} eggs are available in Shed {shed}."
+            )
+
+        add_broken(
+            shed,
+            quantity,
+            report_date
+        )
+
+        return f"✅ Recorded {quantity} broken eggs in Shed {shed}"
     # ---------------- ADD SOLD ----------------
 
     elif intent == "add_sold":
-        quantity = data["quantity"]
-        add_sold(shed, quantity)
-        return f"✅ Recorded {quantity} sold eggs from Shed {shed}"
 
-    # ---------------- SHED SUMMARY ----------------
+        quantity = data["quantity"]
+
+        report_date = data.get("date")
+
+        if report_date is None or report_date == "today":
+            report_date = str(date.today())
+
+        elif report_date == "yesterday":
+            report_date = str(date.today() - timedelta(days=1))
+
+        record = get_summary(shed, report_date)
+
+        if record is None:
+            return f"No production record found for Shed {shed} on {report_date}."
+
+        available = record.produced - record.broken - record.sold
+
+        if quantity > available:
+            return (
+                f"❌ Cannot sell {quantity} eggs.\n"
+                f"Only {available} eggs are available in Shed {shed}."
+            )
+
+        add_sold(
+            shed,
+            quantity,
+            report_date
+        )
+
+        return f"✅ Recorded {quantity} sold eggs from Shed {shed}"    # ---------------- SHED SUMMARY ----------------
 
     elif intent == "get_summary":
 

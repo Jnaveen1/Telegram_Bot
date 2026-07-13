@@ -7,7 +7,7 @@ from telegram.ext import (
 )
 
 from config import TELEGRAM_BOT_TOKEN
-from llm import understand_message
+from llm import understand_message, translate_response 
 from service import process_request
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -22,6 +22,13 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         print("LLM Output:", data)
 
         reply = process_request(data)
+
+        language = data.get("language", "en")
+
+        reply = translate_response(
+            reply,
+            language
+        )
 
         await update.message.reply_text(reply)
 
