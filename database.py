@@ -18,7 +18,6 @@ SessionLocal = sessionmaker(
 def create_database():
     Base.metadata.create_all(engine)
 
-
 def add_production(shed_no, quantity):
     db = SessionLocal()
     today = str(date.today())
@@ -85,16 +84,20 @@ def add_sold(shed_no, quantity):
     db.commit()
     db.close()
 
-def get_summary(shed_no):
+def get_summary(shed_no, report_date):
     db = SessionLocal()
 
-    today = str(date.today())
+    # today = str(date.today())
+
+    print("Searching for:")
+    print("Shed:", shed_no)
+    print("Date:", report_date)
 
     record = (
         db.query(EggRecord)
         .filter(
             EggRecord.shed_no == shed_no,
-            EggRecord.date == today
+            EggRecord.date == report_date
         )
         .first()
     )
@@ -102,3 +105,17 @@ def get_summary(shed_no):
     db.close()
 
     return record
+
+def get_daily_summary(report_date):
+
+    db = SessionLocal()
+
+    records = (
+        db.query(EggRecord)
+        .filter(EggRecord.date == report_date)
+        .all()
+    )
+
+    db.close()
+
+    return records

@@ -33,6 +33,7 @@ def understand_message(message):
         - get_production
         - get_broken
         - get_sold
+        - get_daily_summary
 
         Return ONLY JSON.
 
@@ -42,6 +43,17 @@ def understand_message(message):
         shed
         quantity
         date
+
+        Important Rules:
+
+        1. If the user mentions a shed number (e.g., Shed 1, Shed 2, first shed), use the shed-specific intents:
+        - get_summary
+        - get_production
+        - get_broken
+        - get_sold
+
+        2. If the user does NOT mention any shed number and asks for today's summary, yesterday's summary, or a daily report, use:
+        - get_daily_summary
 
         Examples:
 
@@ -98,6 +110,50 @@ def understand_message(message):
             "shed":3,
             "quantity":null,
             "date":null
+        }}
+
+        User:
+        Today's summary
+
+        JSON:
+        {{
+            "intent":"get_daily_summary",
+            "shed":null,
+            "quantity":null,
+            "date":"today"
+        }}
+
+        User:
+        Yesterday's summary
+
+        JSON:
+        {{
+            "intent":"get_daily_summary",
+            "shed":null,
+            "quantity":null,
+            "date":"yesterday"
+        }}
+
+        User:
+        Yesterday shed 1 summary
+
+        JSON:
+        {{
+            "intent":"get_summary",
+            "shed":1,
+            "quantity":null,
+            "date":"yesterday"
+        }}
+
+        User:
+        Today shed 2 summary
+
+        JSON:
+        {{
+            "intent":"get_summary",
+            "shed":2,
+            "quantity":null,
+            "date":"today"
         }}
 
         Now convert this:
