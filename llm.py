@@ -112,6 +112,8 @@ def understand_message(message):
         - get_lowest_broken
         - get_lowest_sold
         - get_lowest_stock
+        - get_weekly_summary
+        - get_monthly_summary
 
         Return ONLY JSON.
 
@@ -575,6 +577,29 @@ def understand_message(message):
             "unit":"egg"
         }}
 
+        User:
+        Weekly summary / This week report / Last Week Summary report . 
+
+        {{
+            "intent":"get_weekly_summary",
+            "shed":null,
+            "quantity":null,
+            "date":"this_week",
+            "language":"en",
+            "unit":"egg"
+        }}
+
+        User:
+        Monthly summary / This month report / Last month Summary report . 
+
+        {{
+            "intent":"get_monthly_summary",
+            "shed":null,
+            "quantity":null,
+            "date":"this_month",
+            "language":"en",
+            "unit":"egg"
+        }}
 
         Now convert this:
 

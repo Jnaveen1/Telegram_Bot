@@ -1,7 +1,7 @@
 from sqlalchemy import create_engine , func
 from sqlalchemy.orm import sessionmaker
 from base import Base
-from datetime import date
+from datetime import date , timedelta
 from models import EggRecord
 
 
@@ -159,6 +159,49 @@ def get_records_by_date(report_date):
         db.query(EggRecord)
         .filter(EggRecord.date == report_date)
         .order_by(EggRecord.shed_no)
+        .all()
+    )
+
+    db.close()
+
+    return records
+
+def get_weekly_summary():
+
+    db = SessionLocal()
+
+    end_date = date.today()
+    start_date = end_date - timedelta(days=6)
+
+    records = (
+        db.query(EggRecord)
+        .filter(
+            EggRecord.date >= str(start_date),
+            EggRecord.date <= str(end_date)
+        )
+        .order_by(EggRecord.date, EggRecord.shed_no)
+        .all()
+    )
+
+    db.close()
+
+    return records
+
+def get_monthly_summary():
+
+    db = SessionLocal()
+
+    today = date.today()
+
+    start_date = today.replace(day=1)
+
+    records = (
+        db.query(EggRecord)
+        .filter(
+            EggRecord.date >= str(start_date),
+            EggRecord.date <= str(today)
+        )
+        .order_by(EggRecord.date, EggRecord.shed_no)
         .all()
     )
 

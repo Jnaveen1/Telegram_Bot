@@ -8,6 +8,8 @@ from database import (
     get_shed_count, 
     get_farm_stock, 
     get_records_by_date, 
+    get_weekly_summary, 
+    get_monthly_summary
 )
 
 def eggs_to_trays(eggs):
@@ -34,6 +36,75 @@ def format_quantity(eggs, unit):
 
     return f"{eggs} eggs"
 
+def generate_period_summary(records, title):
+
+    if not records:
+        return f"No records found."
+
+    reply = f"{title}\n\n"
+
+    total_produced = 0
+    total_broken = 0
+    total_sold = 0
+
+    current_date = None
+
+    day_produced = 0
+    day_broken = 0
+    day_sold = 0
+
+    for record in records:
+
+        if current_date != record.date:
+
+            if current_date is not None:
+
+                stock = day_produced - day_broken - day_sold
+
+                reply += (
+                    f"Produced : {day_produced}\n"
+                    f"Broken   : {day_broken}\n"
+                    f"Sold     : {day_sold}\n"
+                    f"Stock    : {stock}\n\n"
+                )
+
+            current_date = record.date
+
+            reply += f"📅 {current_date}\n"
+
+            day_produced = 0
+            day_broken = 0
+            day_sold = 0
+
+        day_produced += record.produced
+        day_broken += record.broken
+        day_sold += record.sold
+
+        total_produced += record.produced
+        total_broken += record.broken
+        total_sold += record.sold
+
+    stock = day_produced - day_broken - day_sold
+
+    reply += (
+        f"Produced : {day_produced}\n"
+        f"Broken   : {day_broken}\n"
+        f"Sold     : {day_sold}\n"
+        f"Stock    : {stock}\n\n"
+    )
+
+    total_stock = total_produced - total_broken - total_sold
+
+    reply += (
+        "--------------------------\n"
+        f"Total Produced : {total_produced}\n"
+        f"Total Broken   : {total_broken}\n"
+        f"Total Sold     : {total_sold}\n"
+        f"Current Stock  : {total_stock}"
+    )
+
+    return reply
+
 def process_request(data):
 
     intent = data["intent"]
@@ -47,7 +118,9 @@ def process_request(data):
             "get_daily_summary",
             "get_shed_count",
             "get_farm_stock", 
-            "get_total_broken"
+            "get_total_broken", 
+            "get_weekly_summary",
+            "get_monthly_summary",
         ]:
             return (
                 "Please specify the shed number.\n"
@@ -534,4 +607,22 @@ def process_request(data):
             f"📉 Lowest Stock ({report_date})\n\n"
             f"🐔 Shed {lowest.shed_no}\n"
             f"Stock : {format_quantity(stock, unit)}"
+        )
+
+    elif intent == "get_weekly_summary":
+
+        records = get_weekly_summary()
+
+        return generate_period_summary(
+            records,
+            "📅 Weekly Report"
+        )
+
+    elif intent == "get_monthly_summary":
+
+        records = get_monthly_summary()
+
+        return generate_period_summary(
+            records,
+            "📅 Monthly Report"
         )
