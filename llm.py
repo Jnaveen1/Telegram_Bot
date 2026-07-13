@@ -103,8 +103,15 @@ def understand_message(message):
         - get_total_broken
         - get_total_production
         - get_total_sold
-        - get_total_remaining
-
+        - get_total_remaining 
+        - get_highest_production
+        - get_highest_broken
+        - get_highest_stock
+        - get_highest_sold
+        - get_lowest_production
+        - get_lowest_broken
+        - get_lowest_sold
+        - get_lowest_stock
 
         Return ONLY JSON.
 
@@ -462,6 +469,112 @@ def understand_message(message):
             "language":"en",
             "unit":"egg"
         }}
+
+        User:
+        Which shed produced the most eggs today?
+
+        JSON:
+        {{
+            "intent":"get_highest_production",
+            "shed":null,
+            "quantity":null,
+            "date":"today",
+            "language":"en",
+            "unit":"egg"
+        }}
+
+        User:
+        Highest production today
+
+        JSON:
+        {{
+            "intent":"get_highest_production",
+            "shed":null,
+            "quantity":null,
+            "date":"today",
+            "language":"en",
+            "unit":"egg"
+        }}
+
+        User:
+        Which shed highest broken eggs today?
+        {{
+            "intent":"get_highest_broken",
+            "shed":null,
+            "quantity":null,
+            "date":"today",
+            "language":"en",
+            "unit":"egg"
+        }}
+
+        User:
+        Which shed has highest sold eggs ?
+        {{
+            "intent":"get_highest_sold",
+            "shed":null,
+            "quantity":null,
+            "date":"today",
+            "language":"en",
+            "unit":"egg"
+        }}
+
+        User: 
+        Which shed has highest stock today?
+        {{
+            "intent":"get_highest_stock",
+            "shed":null,
+            "quantity":null,
+            "date":"today",
+            "language":"en",
+            "unit":"egg"
+        }}
+
+        User:
+        which shed has lowest production ?
+        {{
+            "intent":"get_lowest_production",
+            "shed":null,
+            "quantity":null,
+            "date":"today",
+            "language":"en",
+            "unit":"egg"
+        }}
+
+        User:
+        which shed has lowest broken eggs ?
+        {{
+            "intent":"get_lowest_broken",
+            "shed":null,
+            "quantity":null,
+            "date":"today",
+            "language":"en",
+            "unit":"egg"
+        }}
+
+        User:
+        which shed has lowest sold eggs ?
+
+        {{
+            "intent":"get_lowest_sold",
+            "shed":null,
+            "quantity":null,
+            "date":"today",
+            "language":"en",
+            "unit":"egg"
+        }}
+
+        User:
+        which shed has lowest stock ?
+
+        {{
+            "intent":"get_lowest_stock",
+            "shed":null,
+            "quantity":null,
+            "date":"today",
+            "language":"en",
+            "unit":"egg"
+        }}
+
 
         Now convert this:
 

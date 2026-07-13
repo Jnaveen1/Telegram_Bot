@@ -7,7 +7,7 @@ from database import (
     get_daily_summary, 
     get_shed_count, 
     get_farm_stock, 
-    get_records_by_date
+    get_records_by_date, 
 )
 
 def eggs_to_trays(eggs):
@@ -390,3 +390,148 @@ def process_request(data):
             f"{format_quantity(total, unit)}"
         )    
 
+    elif intent == "get_highest_production":
+
+        report_date = get_report_date(data)
+
+        records = get_records_by_date(report_date)
+
+        if not records:
+            return f"No data found for {report_date}."
+
+        highest = max(records, key=lambda r: r.produced)
+
+        return (
+            f"🏆 Highest Production ({report_date})\n\n"
+            f"🐔 Shed {highest.shed_no}\n"
+            f"Produced : {format_quantity(highest.produced, unit)}"
+        )
+    
+    elif intent == "get_highest_broken":
+
+        report_date = get_report_date(data)
+
+        records = get_records_by_date(report_date)
+
+        if not records:
+            return f"No data found for {report_date}."
+
+        highest = max(records, key=lambda r: r.broken)
+
+        return (
+            f"🥚 Highest Broken Eggs ({report_date})\n\n"
+            f"🐔 Shed {highest.shed_no}\n"
+            f"Broken : {format_quantity(highest.broken, unit)}"
+        )
+
+    elif intent == "get_highest_sold":
+
+        report_date = get_report_date(data)
+
+        records = get_records_by_date(report_date)
+
+        if not records:
+            return f"No data found for {report_date}."
+
+        highest = max(records, key=lambda r: r.sold)
+
+        return (
+            f"🥚 Highest Sold Eggs ({report_date})\n\n"
+            f"🐔 Shed {highest.shed_no}\n"
+            f"Sold : {format_quantity(highest.sold, unit)}"
+        )
+
+    elif intent == "get_highest_stock":
+
+        report_date = get_report_date(data)
+
+        records = get_records_by_date(report_date)
+
+        if not records:
+            return f"No data found for {report_date}."
+
+        highest = max(
+            records,
+            key=lambda r: r.produced - r.broken - r.sold
+        )
+
+        stock = highest.produced - highest.broken - highest.sold
+
+        return (
+            f"📦 Highest Stock ({report_date})\n\n"
+            f"🐔 Shed {highest.shed_no}\n"
+            f"Stock : {format_quantity(stock, unit)}"
+        )
+
+    elif intent == "get_lowest_production":
+
+        report_date = get_report_date(data)
+
+        records = get_records_by_date(report_date)
+
+        if not records:
+            return f"No data found for {report_date}."
+
+        lowest = min(records, key=lambda r: r.produced)
+
+        return (
+            f"📉 Lowest Production ({report_date})\n\n"
+            f"🐔 Shed {lowest.shed_no}\n"
+            f"Produced : {format_quantity(lowest.produced, unit)}"
+        )
+
+    elif intent == "get_lowest_broken":
+
+        report_date = get_report_date(data)
+
+        records = get_records_by_date(report_date)
+
+        if not records:
+            return f"No data found for {report_date}."
+
+        lowest = min(records, key=lambda r: r.broken)
+
+        return (
+            f"📉 Lowest Broken Eggs ({report_date})\n\n"
+            f"🐔 Shed {lowest.shed_no}\n"
+            f"Broken : {format_quantity(lowest.broken, unit)}"
+        )
+
+    elif intent == "get_lowest_sold":
+
+        report_date = get_report_date(data)
+
+        records = get_records_by_date(report_date)
+
+        if not records:
+            return f"No data found for {report_date}."
+
+        lowest = min(records, key=lambda r: r.sold)
+
+        return (
+            f"📉 Lowest Sold Eggs ({report_date})\n\n"
+            f"🐔 Shed {lowest.shed_no}\n"
+            f"Sold : {format_quantity(lowest.sold, unit)}"
+        )
+
+    elif intent == "get_lowest_stock":
+
+        report_date = get_report_date(data)
+
+        records = get_records_by_date(report_date)
+
+        if not records:
+            return f"No data found for {report_date}."
+
+        lowest = min(
+            records,
+            key=lambda r: r.produced - r.broken - r.sold
+        )
+
+        stock = lowest.produced - lowest.broken - lowest.sold
+
+        return (
+            f"📉 Lowest Stock ({report_date})\n\n"
+            f"🐔 Shed {lowest.shed_no}\n"
+            f"Stock : {format_quantity(stock, unit)}"
+        )
