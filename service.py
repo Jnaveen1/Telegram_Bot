@@ -611,12 +611,16 @@ def process_request(data):
 
     elif intent == "get_weekly_summary":
 
-        records = get_weekly_summary()
+        period = data.get("date", "this_week")
 
-        return generate_period_summary(
-            records,
-            "📅 Weekly Report"
-        )
+        records = get_weekly_summary(period)
+
+        if period == "last_week":
+            title = "📅 Last Week Report"
+        else:
+            title = "📅 This Week Report"
+
+        return generate_period_summary(records, title)
 
     elif intent == "get_monthly_summary":
 

@@ -3,9 +3,7 @@ import json
 import google.generativeai as genai
 from dotenv import load_dotenv
 
-
 load_dotenv()
-
 
 genai.configure(
     api_key=os.getenv("GEMINI_API_KEY")
@@ -578,7 +576,7 @@ def understand_message(message):
         }}
 
         User:
-        Weekly summary / This week report / Last Week Summary report . 
+        Weekly summary / This week report . 
 
         {{
             "intent":"get_weekly_summary",
@@ -588,6 +586,19 @@ def understand_message(message):
             "language":"en",
             "unit":"egg"
         }}
+
+        User:
+        Last week report
+
+        JSON:
+        {
+            "intent":"get_weekly_summary",
+            "shed":null,
+            "quantity":null,
+            "date":"last_week",
+            "language":"en",
+            "unit":"egg"
+        }
 
         User:
         Monthly summary / This month report / Last month Summary report . 

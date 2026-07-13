@@ -166,12 +166,25 @@ def get_records_by_date(report_date):
 
     return records
 
-def get_weekly_summary():
+def get_weekly_summary(period):
 
     db = SessionLocal()
 
-    end_date = date.today()
-    start_date = end_date - timedelta(days=6)
+    today = date.today()
+
+    if period == "last_week":
+
+        this_week_start = today - timedelta(days=today.weekday())
+
+        start_date = this_week_start - timedelta(days=7)
+
+        end_date = this_week_start - timedelta(days=1)
+
+    else:
+
+        start_date = today - timedelta(days=today.weekday())
+
+        end_date = today
 
     records = (
         db.query(EggRecord)
@@ -208,4 +221,3 @@ def get_monthly_summary():
     db.close()
 
     return records
-
