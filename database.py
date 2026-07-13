@@ -1,8 +1,9 @@
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine , func
 from sqlalchemy.orm import sessionmaker
 from base import Base
 from datetime import date
 from models import EggRecord
+
 
 DATABASE_URL = "sqlite:///egg_database.db"
 
@@ -120,3 +121,48 @@ def get_daily_summary(report_date):
     db.close()
 
     return records
+
+def get_shed_count(report_date):
+
+    db = SessionLocal()
+
+    count = (
+        db.query(func.count(func.distinct(EggRecord.shed_no)))
+        .filter(EggRecord.date == report_date)
+        .scalar()
+    )
+
+    db.close()
+
+    return count
+
+def get_farm_stock(report_date):
+
+    db = SessionLocal()
+
+    records = (
+        db.query(EggRecord)
+        .filter(EggRecord.date == report_date)
+        .order_by(EggRecord.shed_no)
+        .all()
+    )
+
+    db.close()
+
+    return records
+
+def get_records_by_date(report_date):
+
+    db = SessionLocal()
+
+    records = (
+        db.query(EggRecord)
+        .filter(EggRecord.date == report_date)
+        .order_by(EggRecord.shed_no)
+        .all()
+    )
+
+    db.close()
+
+    return records
+

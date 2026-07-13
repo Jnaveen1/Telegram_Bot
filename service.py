@@ -4,22 +4,54 @@ from database import (
     add_broken,
     add_sold,
     get_summary,
-    get_daily_summary
+    get_daily_summary, 
+    get_shed_count, 
+    get_farm_stock, 
+    get_records_by_date
 )
 
+def eggs_to_trays(eggs):
+    trays = eggs // 30
+    remaining_eggs = eggs % 30
+    return f"{trays}.{remaining_eggs:02d}"
+
+def get_report_date(data):
+
+    report_date = data.get("date")
+
+    if report_date is None or report_date == "today":
+        return str(date.today())
+
+    elif report_date == "yesterday":
+        return str(date.today() - timedelta(days=1))
+
+    return report_date
+
+def format_quantity(eggs, unit):
+
+    if unit == "tray":
+        return f"{eggs_to_trays(eggs)} trays"
+
+    return f"{eggs} eggs"
 
 def process_request(data):
 
     intent = data["intent"]
     shed = data["shed"]
+    unit = data.get("unit", "egg")
 
     # ---------------- ADD PRODUCTION ----------------
 
     if intent == "add_production":
-        if shed is None:
+        if shed is None and intent not in [
+            "get_daily_summary",
+            "get_shed_count",
+            "get_farm_stock", 
+            "get_total_broken"
+        ]:
             return (
                 "Please specify the shed number.\n"
-                "Example: 'Shed 1 produced 10 eggs'."
+                "Example: 'Give summary of shed 1'."
             )
 
         quantity = data["quantity"]
@@ -40,13 +72,7 @@ def process_request(data):
 
         quantity = data["quantity"]
 
-        report_date = data.get("date")
-
-        if report_date is None or report_date == "today":
-            report_date = str(date.today())
-
-        elif report_date == "yesterday":
-            report_date = str(date.today() - timedelta(days=1))
+        report_date = get_report_date(data)
 
         record = get_summary(shed, report_date)
 
@@ -74,13 +100,7 @@ def process_request(data):
 
         quantity = data["quantity"]
 
-        report_date = data.get("date")
-
-        if report_date is None or report_date == "today":
-            report_date = str(date.today())
-
-        elif report_date == "yesterday":
-            report_date = str(date.today() - timedelta(days=1))
+        report_date = get_report_date(data)
 
         record = get_summary(shed, report_date)
 
@@ -111,13 +131,7 @@ def process_request(data):
                 "Example: 'Give summary of shed 1'."
             )
 
-        report_date = data.get("date")
-
-        if report_date is None or report_date == "today":
-            report_date = str(date.today())
-
-        elif report_date == "yesterday":
-            report_date = str(date.today() - timedelta(days=1))
+        report_date = get_report_date(data)
 
         record = get_summary(shed, report_date)
 
@@ -180,19 +194,23 @@ def process_request(data):
         if record is None:
             return f"No data found for Shed {shed} today."
 
-        return f"Shed {shed} produced {record.produced} eggs today."
+        if unit == "tray":
+            trays = eggs_to_trays(record.produced)
+            return (
+                f"Shed {shed} produced "
+                f"{trays} trays."
+            )
+
+        return (
+            f"Shed {shed} produced "
+            f"{format_quantity(record.produced, unit)} today."
+        )
 
     # ---------------- DAILY SUMMARY ----------------
 
     elif intent == "get_daily_summary":
 
-        report_date = data.get("date")
-
-        if report_date is None or report_date == "today":
-            report_date = str(date.today())
-
-        elif report_date == "yesterday":
-            report_date = str(date.today() - timedelta(days=1))
+        report_date = get_report_date(data)
 
         records = get_daily_summary(report_date)
 
@@ -238,13 +256,7 @@ def process_request(data):
         if shed is None:
             return "Please specify the shed number."
 
-        report_date = data.get("date")
-
-        if report_date is None or report_date == "today":
-            report_date = str(date.today())
-
-        elif report_date == "yesterday":
-            report_date = str(date.today() - timedelta(days=1))
+        report_date = get_report_date(data)
 
         record = get_summary(shed, report_date)
 
@@ -253,12 +265,128 @@ def process_request(data):
 
         remaining = record.produced - record.broken - record.sold
 
+        if unit == "tray":
+            trays = eggs_to_trays(remaining)
+            return (
+                f"Shed {shed} has "
+                f"{trays} trays remaining."
+            )
+
         return (
-            f"🥚 Remaining eggs in Shed {shed} ({report_date}): "
-            f"{remaining}"
+            f"Shed {shed} has "
+            f"{remaining} eggs remaining."
         )
 
-    # ---------------- UNKNOWN ----------------
+    elif intent == "get_shed_count":
 
-    else:
-        return "Unknown operation."
+        report_date = get_report_date(data)
+
+        count = get_shed_count(report_date)
+
+        return f"There are {count} sheds on {report_date}."
+    
+    elif intent == "get_farm_stock":
+
+        report_date = get_report_date(data)
+
+        records = get_farm_stock(report_date)
+
+        if not records:
+            return f"No data found for {report_date}."
+
+        reply = f"📦 Farm Stock ({report_date})\n\n"
+
+        total_stock = 0
+
+        for record in records:
+
+            stock = record.produced - record.broken - record.sold
+
+            if unit == "tray":
+                stock_display = f"{eggs_to_trays(stock)} trays"
+            else:
+                stock_display = f"{stock} eggs"
+
+            reply += (
+                f"🐔 Shed {record.shed_no} : {stock_display}\n"
+            )
+
+            total_stock += stock
+
+        if unit == "tray":
+            total_display = f"{eggs_to_trays(total_stock)} trays"
+        else:
+            total_display = f"{total_stock} eggs"
+
+        reply += (
+            "\n--------------------------\n"
+            f"Total Stock : {total_display}"
+        )
+
+        return reply
+
+    elif intent == "get_total_broken":
+
+        report_date = get_report_date(data)
+
+        records = get_records_by_date(report_date)
+
+        if not records:
+            return f"No data found for {report_date}."
+
+        total_broken = sum(record.broken for record in records)
+
+        return (
+            f"🥚 Total Broken Eggs ({report_date})\n\n"
+            f"{format_quantity(total_broken, unit)}"
+        )
+    
+    elif intent == "get_total_production":
+
+        report_date = get_report_date(data)
+
+        records = get_records_by_date(report_date)
+
+        # report_date = get_report_date(data)
+
+        total = sum(record.produced for record in records)
+
+        return (
+            f"🥚 Total Production ({report_date})\n\n"
+            f"{format_quantity(total, unit)}"
+        )
+
+    elif intent == "get_total_sold":
+
+        report_date = get_report_date(data)
+        if report_date is None or report_date == "today":
+            report_date = str(date.today())
+
+        elif report_date == "yesterday":
+            report_date = str(date.today() - timedelta(days=1))
+
+        records = get_records_by_date(report_date)
+
+        total = sum(record.sold for record in records)
+
+        return (
+            f"🥚 Total Sold ({report_date})\n\n"
+            f"{format_quantity(total, unit)}"
+        )
+
+    elif intent == "get_total_remaining":
+
+        report_date = get_report_date(data)
+
+        records = get_records_by_date(report_date)
+
+        total = sum(
+            record.produced - record.broken - record.sold
+            for record in records
+        )
+
+        return (
+            f"🥚 Total Remaining ({report_date})\n\n"
+            f"{format_quantity(total, unit)}"
+        )    
+

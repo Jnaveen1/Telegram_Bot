@@ -51,10 +51,13 @@ def understand_message(message):
             "shed":null,
             "quantity":10,
             "date":"today", 
-            "language":"en"
+            "language":"en", 
+            "unit":"egg"
         }}
 
         Do not guess the shed number.
+
+
 
         Convert the user message into JSON.
 
@@ -67,7 +70,8 @@ def understand_message(message):
             "shed":null,
             "quantity":null,
             "date":"2026-07-11", 
-            "language":"en"
+            "language":"en", 
+            "unit":"egg"
         }}
 
         User:
@@ -79,7 +83,8 @@ def understand_message(message):
         "shed":null,
         "quantity":null,
         "date":"2026-07-11", 
-        "language":"en"
+        "language":"en" ,
+        "unit":"egg"
         }}
 
         Possible intents:
@@ -93,6 +98,12 @@ def understand_message(message):
         - get_sold
         - get_daily_summary
         - get_remaining
+        - get_shed_count
+        - get_farm_stock
+        - get_total_broken
+        - get_total_production
+        - get_total_sold
+        - get_total_remaining
 
 
         Return ONLY JSON.
@@ -103,6 +114,19 @@ def understand_message(message):
         shed
         quantity
         date
+        unit
+
+        Output unit:
+
+        - If the user asks in eggs, return:
+        "unit":"egg"
+
+        - If the user asks in trays or tray, return:
+        "unit":"tray"
+
+        - If the user is adding production, broken or sold,
+        always return:
+        "unit":"egg"
 
         Important Rules:
 
@@ -121,13 +145,15 @@ def understand_message(message):
         "Shed 1 produced 100 eggs"
 
         Note : 1 tray contains 30 eggs , when the user enters in trays , you need to convert those into eggs . For example , 10 trays = 10 * 30 = 300 days 
-
+        
+        
         JSON:
         {{
         "intent":"add_production",
         "shed":1,
         "quantity":100, 
-        "language":"en"
+        "language":"en" ,
+        "unit":"egg"
         }}
 
         User:
@@ -138,19 +164,20 @@ def understand_message(message):
         "intent":"add_production",
         "shed":1,
         "quantity":100, 
-        "language":"en"
+        "language":"en" ,
+        "unit":"egg"
         }}
 
         User:
-        "How many broken eggs in shed 1?
-"
+        "How many broken eggs in shed 1?"
         JSON:
         {{
             "intent":"get_broken",
             "shed":1,
             "quantity":null,
             "date":null, 
-            "language":"en"
+            "language":"en", 
+            "unit":"egg"
         }}
 
         User:
@@ -162,7 +189,8 @@ def understand_message(message):
             "shed":2,
             "quantity":null,
             "date":null, 
-            "language":"en"
+            "language":"en", 
+            "unit":"egg"
         }}
 
         User:
@@ -174,7 +202,8 @@ def understand_message(message):
             "shed":3,
             "quantity":null,
             "date":null, 
-            "language":"en"
+            "language":"en", 
+            "unit":"egg"
         }}
 
         User:
@@ -186,7 +215,8 @@ def understand_message(message):
             "shed":null,
             "quantity":null,
             "date":"today", 
-            "language":"en"
+            "language":"en", 
+            "unit":"egg"
         }}
 
         User:
@@ -198,7 +228,8 @@ def understand_message(message):
             "shed":null,
             "quantity":null,
             "date":"yesterday", 
-            "language":"en"
+            "language":"en", 
+            "unit":"egg"
         }}
 
         User:
@@ -210,7 +241,8 @@ def understand_message(message):
             "shed":1,
             "quantity":null,
             "date":"yesterday", 
-            "language":"en"
+            "language":"en", 
+            "unit":"egg"
         }}
 
         User:
@@ -222,7 +254,8 @@ def understand_message(message):
             "shed":2,
             "quantity":null,
             "date":"today", 
-            "language":"en"
+            "language":"en", 
+            "unit":"egg"
         }}
 
         User:
@@ -234,7 +267,8 @@ def understand_message(message):
             "shed":1,
             "quantity":null,
             "date":"today", 
-            "language":"en"
+            "language":"en", 
+            "unit":"egg"
         }}
 
         User:
@@ -246,7 +280,187 @@ def understand_message(message):
             "shed":1,
             "quantity":null,
             "date":"yesterday" ,
-            "language":"en"
+            "language":"en", 
+            "unit":"egg"
+        }}
+
+        User:
+        How many trays were produced in shed 2?
+
+        JSON:
+        {{
+            "intent":"get_production",
+            "shed":2,
+            "quantity":null,
+            "date":"today",
+            "language":"en",
+            "unit":"tray"
+        }}
+
+        User:
+        How many eggs were produced in shed 2?
+
+        JSON:
+        {{
+            "intent":"get_production",
+            "shed":2,
+            "quantity":null,
+            "date":"today",
+            "language":"en",
+            "unit":"egg"
+        }}
+
+        User:
+        Shed 2 produced 289.20 trays
+
+        JSON:
+        {{
+            "intent":"add_production",
+            "shed":2,
+            "quantity":8690,
+            "date":"today",
+            "language":"en",
+            "unit":"egg"
+        }}
+
+        User:
+        How many sheds today?
+
+        JSON:
+        {{
+            "intent":"get_shed_count",
+            "shed":null,
+            "quantity":null,
+            "date":"today",
+            "language":"en",
+            "unit":"egg"
+        }}
+
+        User:
+        How many sheds yesterday?
+
+        JSON:
+        {{
+            "intent":"get_shed_count",
+            "shed":null,
+            "quantity":null,
+            "date":"yesterday",
+            "language":"en",
+            "unit":"egg"
+        }}
+
+        User:
+        Farm stock
+
+        JSON:
+        {{
+            "intent":"get_farm_stock",
+            "shed":null,
+            "quantity":null,
+            "date":"today",
+            "language":"en",
+            "unit":"egg"
+        }}
+
+        User:
+        How many eggs are there today?
+
+        JSON:
+        {{
+            "intent":"get_farm_stock",
+            "shed":null,
+            "quantity":null,
+            "date":"today",
+            "language":"en",
+            "unit":"egg"
+        }}
+
+        User:
+        Yesterday farm stock
+
+        JSON:
+        {{
+            "intent":"get_farm_stock",
+            "shed":null,
+            "quantity":null,
+            "date":"yesterday",
+            "language":"en",
+            "unit":"egg"
+        }}
+
+        User:
+        How many broken eggs are there today?
+
+        JSON:
+        {{
+            "intent":"get_total_broken",
+            "shed":null,
+            "quantity":null,
+            "date":"today",
+            "language":"en",
+            "unit":"egg"
+        }}
+
+        User:
+        Total broken eggs
+
+        JSON:
+        {{
+            "intent":"get_total_broken",
+            "shed":null,
+            "quantity":null,
+            "date":"today",
+            "language":"en",
+            "unit":"egg"
+        }}
+
+        User:
+        Yesterday broken eggs
+
+        JSON:
+        {{
+            "intent":"get_total_broken",
+            "shed":null,
+            "quantity":null,
+            "date":"yesterday",
+            "language":"en",
+            "unit":"egg"
+        }}
+
+        User:
+        How many eggs were produced today?
+
+        {{
+            "intent":"get_total_production",
+            "shed":null,
+            "quantity":null,
+            "date":"today",
+            "language":"en",
+            "unit":"egg"
+        }}
+
+        User:
+        How many sold eggs are there today?
+
+        {{
+            "intent":"get_total_sold",
+            "shed":null,
+            "quantity":null,
+            "date":"today",
+            "language":"en",
+            "unit":"egg"
+        }}
+
+        User:
+        How many remaining eggs are there?
+
+        {{
+            "intent":"get_total_remaining",
+            "shed":null,
+            "quantity":null,
+            "date":"today",
+            "language":"en",
+            "unit":"egg"
         }}
 
         Now convert this:
