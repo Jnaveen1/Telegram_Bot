@@ -165,6 +165,31 @@ def process_request(data):
         )
 
         return reply
+    
+    elif intent == "get_remaining":
+
+        if shed is None:
+            return "Please specify the shed number."
+
+        report_date = data.get("date")
+
+        if report_date is None or report_date == "today":
+            report_date = str(date.today())
+
+        elif report_date == "yesterday":
+            report_date = str(date.today() - timedelta(days=1))
+
+        record = get_summary(shed, report_date)
+
+        if record is None:
+            return f"No data found for Shed {shed} on {report_date}."
+
+        remaining = record.produced - record.broken - record.sold
+
+        return (
+            f"🥚 Remaining eggs in Shed {shed} ({report_date}): "
+            f"{remaining}"
+        )
 
     # ---------------- UNKNOWN ----------------
 

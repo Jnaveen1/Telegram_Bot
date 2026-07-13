@@ -34,6 +34,8 @@ def understand_message(message):
         - get_broken
         - get_sold
         - get_daily_summary
+        - get_remaining
+
 
         Return ONLY JSON.
 
@@ -154,6 +156,28 @@ def understand_message(message):
             "shed":2,
             "quantity":null,
             "date":"today"
+        }}
+
+        User:
+        Remaining eggs in shed 1
+
+        JSON:
+        {{
+            "intent":"get_remaining",
+            "shed":1,
+            "quantity":null,
+            "date":"today"
+        }}
+
+        User:
+        Remaining eggs in shed 1 yesterday
+
+        JSON:
+        {{
+            "intent":"get_remaining",
+            "shed":1,
+            "quantity":null,
+            "date":"yesterday"
         }}
 
         Now convert this:
