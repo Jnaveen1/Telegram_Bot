@@ -2,7 +2,7 @@ from llm import understand_message
 
 
 result = understand_message(
-    "How many eggs are there today?"
+    "Move 100 produced eggs from shed 1 to shed 2"
 )
 
 

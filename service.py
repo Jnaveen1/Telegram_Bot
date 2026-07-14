@@ -9,8 +9,62 @@ from database import (
     get_farm_stock, 
     get_records_by_date, 
     get_weekly_summary, 
-    get_monthly_summary
+    get_monthly_summary , 
+    move_record , 
+    update_record ,
+    remove_record , 
+    delete_field,
+    delete_record , 
+    add_birds,
+    get_birds,
+    get_total_birds, 
+    add_mortality,
+    get_mortality,
+    get_total_mortality , 
+    add_feed,
+    get_feed,
+    get_total_feed ,
+    get_total_live_birds , 
+    get_missing_sheds,
+    get_missing_fields
 )
+
+def generate_daily_reminder(report_date):
+
+    missing_sheds = get_missing_sheds(report_date)
+
+    missing_fields = get_missing_fields(report_date)
+
+    reply = f"⏰ Daily Reminder ({report_date})\n\n"
+
+    if missing_sheds:
+
+        reply += "❌ Missing Shed Reports\n"
+
+        for shed in missing_sheds:
+            reply += f"• Shed {shed}\n"
+
+        reply += "\n"
+
+    incomplete = False
+
+    for shed, fields in missing_fields.items():
+
+        if fields == ["No report submitted"]:
+            continue
+
+        incomplete = True
+
+        reply += (
+            f"🐔 Shed {shed}\n"
+            f"Missing : {', '.join(fields)}\n\n"
+        )
+
+    if not missing_sheds and not incomplete:
+
+        return "✅ All 9 sheds have submitted complete reports."
+
+    return reply
 
 def eggs_to_trays(eggs):
     trays = eggs // 30
@@ -39,15 +93,23 @@ def format_quantity(eggs, unit):
 def generate_period_summary(records, title):
 
     if not records:
-        return f"No records found."
+        return "No records found."
 
     reply = f"{title}\n\n"
+
+    total_birds = 0
+    total_mortality = 0
+    total_feed = 0
 
     total_produced = 0
     total_broken = 0
     total_sold = 0
 
     current_date = None
+
+    day_birds = 0
+    day_mortality = 0
+    day_feed = 0
 
     day_produced = 0
     day_broken = 0
@@ -62,45 +124,74 @@ def generate_period_summary(records, title):
                 stock = day_produced - day_broken - day_sold
 
                 reply += (
-                    f"Produced : {day_produced}\n"
-                    f"Broken   : {day_broken}\n"
-                    f"Sold     : {day_sold}\n"
-                    f"Stock    : {stock}\n\n"
+                    f"Birds      : {day_birds}\n"
+                    f"Mortality  : {day_mortality}\n"
+                    f"Feed       : {day_feed} kg\n"
+                    f"Produced   : {day_produced}\n"
+                    f"Broken     : {day_broken}\n"
+                    f"Sold       : {day_sold}\n"
+                    f"Stock      : {stock}\n\n"
                 )
 
             current_date = record.date
 
             reply += f"📅 {current_date}\n"
 
+            day_birds = 0
+            day_mortality = 0
+            day_feed = 0
+
             day_produced = 0
             day_broken = 0
             day_sold = 0
 
-        day_produced += record.produced
-        day_broken += record.broken
-        day_sold += record.sold
+        birds = record.birds or 0
+        mortality = record.mortality or 0
+        feed = record.feed or 0
 
-        total_produced += record.produced
-        total_broken += record.broken
-        total_sold += record.sold
+        produced = record.produced or 0
+        broken = record.broken or 0
+        sold = record.sold or 0
+
+        day_birds += birds
+        day_mortality += mortality
+        day_feed += feed
+
+        day_produced += produced
+        day_broken += broken
+        day_sold += sold
+
+        total_birds += birds
+        total_mortality += mortality
+        total_feed += feed
+
+        total_produced += produced
+        total_broken += broken
+        total_sold += sold
 
     stock = day_produced - day_broken - day_sold
 
     reply += (
-        f"Produced : {day_produced}\n"
-        f"Broken   : {day_broken}\n"
-        f"Sold     : {day_sold}\n"
-        f"Stock    : {stock}\n\n"
+        f"Birds      : {day_birds}\n"
+        f"Mortality  : {day_mortality}\n"
+        f"Feed       : {day_feed} kg\n"
+        f"Produced   : {day_produced}\n"
+        f"Broken     : {day_broken}\n"
+        f"Sold       : {day_sold}\n"
+        f"Stock      : {stock}\n\n"
     )
 
     total_stock = total_produced - total_broken - total_sold
 
     reply += (
         "--------------------------\n"
-        f"Total Produced : {total_produced}\n"
-        f"Total Broken   : {total_broken}\n"
-        f"Total Sold     : {total_sold}\n"
-        f"Current Stock  : {total_stock}"
+        f"Total Birds      : {total_birds}\n"
+        f"Total Mortality  : {total_mortality}\n"
+        f"Total Feed       : {total_feed} kg\n\n"
+        f"Total Produced   : {total_produced}\n"
+        f"Total Broken     : {total_broken}\n"
+        f"Total Sold       : {total_sold}\n"
+        f"Current Stock    : {total_stock}"
     )
 
     return reply
@@ -152,7 +243,11 @@ def process_request(data):
         if record is None:
             return f"No production record found for Shed {shed} on {report_date}."
 
-        available = record.produced - record.broken - record.sold
+        produced = record.produced or 0
+        broken = record.broken or 0
+        sold = record.sold or 0
+
+        available = produced - broken - sold
 
         if quantity > available:
             return (
@@ -180,7 +275,11 @@ def process_request(data):
         if record is None:
             return f"No production record found for Shed {shed} on {report_date}."
 
-        available = record.produced - record.broken - record.sold
+        produced = record.produced or 0
+        broken = record.broken or 0
+        sold = record.sold or 0
+
+        available = produced - broken - sold
 
         if quantity > available:
             return (
@@ -211,16 +310,22 @@ def process_request(data):
         if record is None:
             return f"No data found for Shed {shed} on {report_date}."
 
-        stock = record.produced - record.broken - record.sold
+        produced = record.produced or 0
+        broken = record.broken or 0
+        sold = record.sold or 0
+
+        stock = produced - broken - sold
 
         return (
             f"📊 Shed {shed} Summary ({report_date})\n\n"
-            f"Produced: {record.produced}\n"
-            f"Broken: {record.broken}\n"
-            f"Sold: {record.sold}\n"
-            f"Stock: {stock}"
+            f"🐔 Birds       : {record.birds}\n"
+            f"💀 Mortality  : {record.mortality}\n"
+            f"🌾 Feed       : {record.feed} kg\n\n"
+            f"🥚 Produced   : {record.produced}\n"
+            f"❌ Broken     : {record.broken}\n"
+            f"📦 Sold       : {record.sold}\n"
+            f"📦 Stock      : {stock}"
         )
-
     # ---------------- BROKEN ----------------
 
     elif intent == "get_broken":
@@ -292,34 +397,56 @@ def process_request(data):
 
         reply = f"📊 Farm Summary ({report_date})\n\n"
 
+        total_birds = 0
+        total_mortality = 0
+        total_feed = 0
+
         total_produced = 0
         total_broken = 0
         total_sold = 0
 
         for record in records:
 
-            stock = record.produced - record.broken - record.sold
+            birds = record.birds or 0
+            mortality = record.mortality or 0
+            feed = record.feed or 0
+
+            produced = record.produced or 0
+            broken = record.broken or 0
+            sold = record.sold or 0
+
+            stock = produced - broken - sold
 
             reply += (
                 f"🐔 Shed {record.shed_no}\n"
-                f"Produced : {record.produced}\n"
-                f"Broken   : {record.broken}\n"
-                f"Sold     : {record.sold}\n"
-                f"Stock    : {stock}\n\n"
+                f"Birds      : {birds}\n"
+                f"Mortality  : {mortality}\n"
+                f"Feed       : {feed} kg\n"
+                f"Produced   : {produced}\n"
+                f"Broken     : {broken}\n"
+                f"Sold       : {sold}\n"
+                f"Stock      : {stock}\n\n"
             )
 
-            total_produced += record.produced
-            total_broken += record.broken
-            total_sold += record.sold
+            total_birds += birds
+            total_mortality += mortality
+            total_feed += feed
+
+            total_produced += produced
+            total_broken += broken
+            total_sold += sold
 
         total_stock = total_produced - total_broken - total_sold
 
         reply += (
             "--------------------------\n"
-            f"Total Produced : {total_produced}\n"
-            f"Total Broken   : {total_broken}\n"
-            f"Total Sold     : {total_sold}\n"
-            f"Current Stock  : {total_stock}"
+            f"Total Birds      : {total_birds}\n"
+            f"Total Mortality  : {total_mortality}\n"
+            f"Total Feed       : {total_feed} kg\n\n"
+            f"Total Produced   : {total_produced}\n"
+            f"Total Broken     : {total_broken}\n"
+            f"Total Sold       : {total_sold}\n"
+            f"Current Stock    : {total_stock}"
         )
 
         return reply
@@ -335,8 +462,13 @@ def process_request(data):
 
         if record is None:
             return f"No data found for Shed {shed} on {report_date}."
+        
+        produced = record.produced or 0
+        broken = record.broken or 0
+        sold = record.sold or 0
 
-        remaining = record.produced - record.broken - record.sold
+
+        remaining = produced - broken - sold
 
         if unit == "tray":
             trays = eggs_to_trays(remaining)
@@ -373,7 +505,11 @@ def process_request(data):
 
         for record in records:
 
-            stock = record.produced - record.broken - record.sold
+            produced = record.produced or 0
+            broken = record.broken or 0
+            sold = record.sold or 0
+
+            stock = produced - broken - sold
 
             if unit == "tray":
                 stock_display = f"{eggs_to_trays(stock)} trays"
@@ -454,7 +590,9 @@ def process_request(data):
         records = get_records_by_date(report_date)
 
         total = sum(
-            record.produced - record.broken - record.sold
+            (record.produced or 0)
+            - (record.broken or 0)
+            - (record.sold or 0)
             for record in records
         )
 
@@ -630,3 +768,307 @@ def process_request(data):
             records,
             "📅 Monthly Report"
         )
+
+    elif intent == "move_record":
+
+        from_shed = data["from_shed"]
+        to_shed = data["to_shed"]
+        field = data["field"]
+        quantity = data["quantity"]
+
+        report_date = data.get("date")
+
+        result = move_record(
+            from_shed,
+            to_shed,
+            field,
+            quantity,
+            report_date
+        )
+
+        if result == "SUCCESS":
+
+            return (
+                f"✅ Successfully moved {quantity} {field} eggs\n\n"
+                f"From Shed {from_shed}\n"
+                f"To Shed {to_shed}"
+            )
+
+        return result
+    
+    elif intent == "update_record":
+
+        shed = data["shed"]
+        field = data["field"]
+        quantity = data["quantity"]
+
+        report_date = data.get("date")
+
+        result = update_record(
+            shed,
+            field,
+            quantity,
+            report_date
+        )
+
+        if result == "SUCCESS":
+
+            return (
+                f"✅ Updated {field} of Shed {shed} "
+                f"to {quantity} eggs."
+            )
+
+        return result
+    
+    elif intent == "remove_record":
+
+        shed = data["shed"]
+        field = data["field"]
+        quantity = data["quantity"]
+
+        report_date = data.get("date")
+
+        result = remove_record(
+            shed,
+            field,
+            quantity,
+            report_date
+        )
+
+        if result == "SUCCESS":
+
+            return (
+                f"✅ Removed {quantity} {field} eggs "
+                f"from Shed {shed}"
+            )
+
+        return result
+
+    elif intent == "delete_field":
+
+        shed = data["shed"]
+        field = data["field"]
+
+        report_date = data.get("date")
+
+        result = delete_field(
+            shed,
+            field,
+            report_date
+        )
+
+        if result == "SUCCESS":
+
+            return (
+                f"✅ Deleted {field} data "
+                f"from Shed {shed}"
+            )
+
+        return result
+
+    elif intent == "delete_record":
+
+        shed = data["shed"]
+
+        report_date = data.get("date")
+
+        result = delete_record(
+            shed,
+            report_date
+        )
+
+        if result == "SUCCESS":
+
+            return (
+                f"✅ Deleted all records "
+                f"of Shed {shed} "
+                f"for {report_date}"
+            )
+
+        return result
+
+    elif intent == "add_birds":
+
+        shed = data["shed"]
+        quantity = data["quantity"]
+
+        report_date = data.get("date")
+
+        result = add_birds(
+            shed,
+            quantity,
+            report_date
+        )
+
+        return result
+
+    elif intent == "get_birds":
+
+        shed = data["shed"]
+        
+        report_date = data.get("date")
+
+        # <-- This part must be OUTSIDE the if/elif
+
+        birds = get_birds(
+            shed,
+            report_date
+        )
+
+        if birds is None:
+            return f"No bird count found for Shed {shed} on {report_date}."
+
+        return (
+            f"🐔 Bird Count ({report_date})\n\n"
+            f"Shed {shed} : {birds} birds"
+        )
+
+    elif intent == "get_total_birds":
+        report_date = data.get("date")
+
+        if report_date is None or report_date == "today":
+            report_date = str(date.today())
+
+        elif report_date == "yesterday":
+            report_date = str(date.today() - timedelta(days=1))
+
+        total = get_total_birds(report_date)
+
+        return (
+            f"🐔 Total Birds ({report_date})\n\n"
+            f"{total} birds"
+        )
+
+    elif intent == "add_mortality":
+
+        shed = data["shed"]
+        report_date = get_report_date(data)
+        quantity = data["quantity"]
+
+        result = add_mortality(
+            shed,
+            quantity,
+            report_date
+        )
+
+        return result
+    
+    elif intent == "get_mortality":
+
+        shed = data["shed"]
+        report_date = get_report_date(data)
+        mortality = get_mortality(
+            shed,
+            report_date
+        )
+
+        return (
+            f"🐔 Shed {shed}\n\n"
+            f"Mortality : {mortality} birds"
+        )
+    
+    elif intent == "get_total_mortality":
+        report_date = get_report_date(data)
+        total = get_total_mortality(report_date)
+
+        return (
+            f"🐔 Total Mortality ({report_date})\n\n"
+            f"{total} birds"
+        )
+    
+    elif intent == "add_feed":
+
+        shed = data["shed"]
+        quantity = data["quantity"]
+
+        report_date = get_report_date(data)
+        
+        result = add_feed(
+            shed,
+            quantity,
+            report_date
+        )
+
+        return result
+    
+    elif intent == "get_feed":
+
+        shed = data["shed"]
+
+        report_date = get_report_date(data)
+
+        feed = get_feed(
+            shed,
+            report_date
+        )
+
+        return (
+            f"🌾 Feed Consumption ({report_date})\n\n"
+            f"Shed {shed} : {feed} kg"
+        )
+    
+    elif intent == "get_total_feed":
+
+        report_date = get_report_date(data)
+
+        total = get_total_feed(report_date)
+
+        return (
+            f"🌾 Total Feed ({report_date})\n\n"
+            f"{total} kg"
+        )
+    
+    elif intent == "get_total_live_birds":
+
+        report_date = get_report_date(data)
+
+        live_birds = get_total_live_birds(report_date)
+
+        return (
+            f"🐓 Total Live Birds ({report_date})\n\n"
+            f"{live_birds} birds"
+        )
+    
+    elif intent == "get_missing_sheds":
+
+        report_date = get_report_date(data)
+
+        missing = get_missing_sheds(report_date)
+
+        if not missing:
+            return (
+                f"✅ All 9 sheds have submitted today's report."
+            )
+
+        reply = f"⚠️ Missing Shed Reports ({report_date})\n\n"
+
+        for shed in missing:
+            reply += f"• Shed {shed}\n"
+
+        reply += f"\nTotal Missing : {len(missing)}"
+
+        return reply
+    
+    elif intent == "get_missing_fields":
+
+        report_date = get_report_date(data)
+
+        result = get_missing_fields(report_date)
+
+        if not result:
+            return (
+                f"✅ All 9 sheds have completed today's report."
+            )
+
+        reply = f"⚠️ Pending Report Fields ({report_date})\n\n"
+
+        for shed in sorted(result.keys()):
+
+            reply += f"🐔 Shed {shed}\n"
+
+            for field in result[shed]:
+                reply += f"• {field}\n"
+
+            reply += "\n"
+
+        return reply

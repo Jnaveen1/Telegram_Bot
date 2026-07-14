@@ -112,6 +112,23 @@ def understand_message(message):
         - get_lowest_stock
         - get_weekly_summary
         - get_monthly_summary
+        - move_record
+        - update_record
+        - remove_record
+        - delete_field
+        - delete_record
+        - add_birds
+        - get_birds
+        - get_total_birds
+        - add_mortality
+        - get_mortality
+        - get_total_mortality
+        - add_feed
+        - get_feed
+        - get_total_feed
+        - get_total_live_birds
+        - get_missing_sheds
+        - get_missing_fields
 
         Return ONLY JSON.
 
@@ -119,9 +136,13 @@ def understand_message(message):
 
         intent
         shed
+        from_shed
+        to_shed
+        field
         quantity
         date
         unit
+        language
 
         Output unit:
 
@@ -447,6 +468,32 @@ def understand_message(message):
         }}
 
         User:
+        11 July production
+
+        JSON:
+        {{
+            "intent":"get_total_production",
+            "shed":null,
+            "quantity":null,
+            "date":"2026-07-11",
+            "language":"en",
+            "unit":"egg"
+        }}
+
+        User:
+        Production on 11-07-2026
+
+        JSON:
+        {{
+            "intent":"get_total_production",
+            "shed":null,
+            "quantity":null,
+            "date":"2026-07-11",
+            "language":"en",
+            "unit":"egg"
+        }}
+
+        User:
         How many sold eggs are there today?
 
         {{
@@ -591,14 +638,14 @@ def understand_message(message):
         Last week report
 
         JSON:
-        {
+        {{
             "intent":"get_weekly_summary",
             "shed":null,
             "quantity":null,
             "date":"last_week",
             "language":"en",
             "unit":"egg"
-        }
+        }}
 
         User:
         Monthly summary / This month report / Last month Summary report . 
@@ -610,6 +657,450 @@ def understand_message(message):
             "date":"this_month",
             "language":"en",
             "unit":"egg"
+        }}
+
+        User:
+        Move 100 produced eggs from shed 1 to shed 2
+
+        JSON:
+        {{
+            "intent":"move_record",
+            "from_shed":1,
+            "to_shed":2,
+            "field":"produced",
+            "quantity":100,
+            "date":"today",
+            "language":"en",
+            "unit":"egg"
+        }}
+
+        User:
+        Move 5 broken eggs from shed 1 to shed 2
+
+        JSON:
+        {{
+            "intent":"move_record",
+            "from_shed":1,
+            "to_shed":2,
+            "field":"broken",
+            "quantity":5,
+            "date":"today",
+            "language":"en",
+            "unit":"egg"
+        }}
+
+        User:
+        Move 20 sold eggs from shed 3 to shed 1
+
+        JSON:
+        {{
+            "intent":"move_record",
+            "from_shed":3,
+            "to_shed":1,
+            "field":"sold",
+            "quantity":20,
+            "date":"today",
+            "language":"en",
+            "unit":"egg"
+        }}
+
+        User:
+        Change today's production of shed 1 to 500 eggs
+
+        JSON:
+        {{
+            "intent":"update_record",
+            "shed":1,
+            "field":"produced",
+            "quantity":500,
+            "date":"today",
+            "language":"en",
+            "unit":"egg"
+        }}
+
+        User:
+        Update yesterday's broken eggs in shed 2 to 15
+
+        JSON:
+        {{
+            "intent":"update_record",
+            "shed":2,
+            "field":"broken",
+            "quantity":15,
+            "date":"yesterday",
+            "language":"en",
+            "unit":"egg"
+        }}
+
+        User:
+        Set sold eggs in shed 3 to 40
+
+        JSON:
+        {{
+            "intent":"update_record",
+            "shed":3,
+            "field":"sold",
+            "quantity":40,
+            "date":"today",
+            "language":"en",
+            "unit":"egg"
+        }}
+
+        User:
+        Remove 20 eggs from today's production of shed 1
+
+        JSON:
+        {{
+            "intent":"remove_record",
+            "shed":1,
+            "field":"produced",
+            "quantity":20,
+            "date":"today",
+            "language":"en",
+            "unit":"egg"
+        }}
+
+        User:
+        Remove 5 broken eggs from shed 2
+
+        JSON:
+        {{
+            "intent":"remove_record",
+            "shed":2,
+            "field":"broken",
+            "quantity":5,
+            "date":"today",
+            "language":"en",
+            "unit":"egg"
+        }}
+
+        User:
+        Remove 10 sold eggs from shed 3 yesterday
+
+        JSON:
+        {{
+            "intent":"remove_record",
+            "shed":3,
+            "field":"sold",
+            "quantity":10,
+            "date":"yesterday",
+            "language":"en",
+            "unit":"egg"
+        }}
+
+        User:
+        Delete today's production of shed 1
+
+        JSON:
+        {{
+            "intent":"delete_field",
+            "shed":1,
+            "field":"produced",
+            "quantity":null,
+            "date":"today",
+            "language":"en",
+            "unit":"egg"
+        }}
+
+        User:
+        Delete broken eggs in shed 2
+
+        JSON:
+        {{
+            "intent":"delete_field",
+            "shed":2,
+            "field":"broken",
+            "quantity":null,
+            "date":"today",
+            "language":"en",
+            "unit":"egg"
+        }}
+
+        User:
+        Delete sold eggs in shed 3 yesterday
+
+        JSON:
+        {{
+            "intent":"delete_field",
+            "shed":3,
+            "field":"sold",
+            "quantity":null,
+            "date":"yesterday",
+            "language":"en",
+            "unit":"egg"
+        }}
+
+        User:
+        Delete today's shed 1 record
+
+        JSON:
+        {{
+            "intent":"delete_record",
+            "shed":1,
+            "quantity":null,
+            "date":"today",
+            "language":"en",
+            "unit":"egg"
+        }}
+
+        User:
+        Shed 1 has 5000 birds
+
+        JSON:
+        {{
+            "intent":"add_birds",
+            "shed":1,
+            "quantity":5000,
+            "date":"today",
+            "language":"en"
+        }}
+        User:
+        Update shed 2 bird count to 4800
+
+        JSON:
+        {{
+            "intent":"add_birds",
+            "shed":2,
+            "quantity":4800,
+            "date":"today",
+            "language":"en"
+        }}
+        User:
+        Bird count in shed 1
+
+        JSON:
+        {{
+            "intent":"get_birds",
+            "shed":1,
+            "quantity":null,
+            "date":"today",
+            "language":"en"
+        }}
+        User:
+        Total birds today
+
+        JSON:
+        {{
+            "intent":"get_total_birds",
+            "shed":null,
+            "quantity":null,
+            "date":"today",
+            "language":"en"
+        }}
+
+        User:
+        5 birds died in shed 1
+
+        JSON:
+        {{
+            "intent":"add_mortality",
+            "shed":1,
+            "quantity":5,
+            "date":"today",
+            "language":"en"
+        }}
+
+        User:
+        Record 3 dead birds in shed 2
+
+        JSON:
+        {{
+            "intent":"add_mortality",
+            "shed":2,
+            "quantity":3,
+            "date":"today",
+            "language":"en"
+        }}
+
+        User:
+        Mortality in shed 1
+
+        JSON:
+        {{
+            "intent":"get_mortality",
+            "shed":1,
+            "quantity":null,
+            "date":"today",
+            "language":"en"
+        }}
+
+        User:
+        Today's mortality
+
+        JSON:
+        {{
+            "intent":"get_total_mortality",
+            "shed":null,
+            "quantity":null,
+            "date":"today",
+            "language":"en"
+        }}
+
+        User:
+        Add 500 kg feed to shed 1
+
+        JSON:
+        {{
+            "intent":"add_feed",
+            "shed":1,
+            "quantity":500,
+            "date":"today",
+            "language":"en",
+            "unit":"kg"
+        }}
+
+        User:
+        Shed 2 consumed 450 kg feed
+
+        JSON:
+        {{
+            "intent":"add_feed",
+            "shed":2,
+            "quantity":450,
+            "date":"today",
+            "language":"en",
+            "unit":"kg"
+        }}
+
+        User:
+        Feed in shed 1
+
+        JSON:
+        {{
+            "intent":"get_feed",
+            "shed":1,
+            "quantity":null,
+            "date":"today",
+            "language":"en",
+            "unit":"kg"
+        }}
+
+        User:
+        Today's feed
+
+        JSON:
+        {{
+            "intent":"get_total_feed",
+            "shed":null,
+            "quantity":null,
+            "date":"today",
+            "language":"en",
+            "unit":"kg"
+        }}
+
+        User:
+        Today's live birds
+
+        JSON:
+        {{
+            "intent":"get_total_live_birds",
+            "shed":null,
+            "quantity":null,
+            "date":"today",
+            "language":"en"
+        }}
+
+        User:
+        Total live birds
+
+        JSON:
+        {{
+            "intent":"get_total_live_birds",
+            "shed":null,
+            "quantity":null,
+            "date":"today",
+            "language":"en"
+        }}
+
+        User:
+        How many live birds are there?
+
+        JSON:
+        {{
+            "intent":"get_total_live_birds",
+            "shed":null,
+            "quantity":null,
+            "date":"today",
+            "language":"en"
+        }}
+
+        User:
+        Today's missing sheds
+
+        JSON:
+        {{
+            "intent":"get_missing_sheds",
+            "shed":null,
+            "quantity":null,
+            "date":"today",
+            "language":"en"
+        }}
+        User:
+        Missing sheds
+
+        JSON:
+        {{
+            "intent":"get_missing_sheds",
+            "shed":null,
+            "quantity":null,
+            "date":"today",
+            "language":"en"
+        }}
+        User:
+        Which sheds have not reported today?
+
+        JSON:
+        {{
+            "intent":"get_missing_sheds",
+            "shed":null,
+            "quantity":null,
+            "date":"today",
+            "language":"en"
+        }}
+        User:
+        Pending sheds
+
+        JSON:
+        {{
+            "intent":"get_missing_sheds",
+            "shed":null,
+            "quantity":null,
+            "date":"today",
+            "language":"en"
+        }}
+
+        User:
+        Today's pending fields
+
+        JSON:
+        {{
+            "intent":"get_missing_fields",
+            "shed":null,
+            "quantity":null,
+            "date":"today",
+            "language":"en"
+        }}
+        User:
+        Incomplete shed reports
+
+        JSON:
+        {{
+            "intent":"get_missing_fields",
+            "shed":null,
+            "quantity":null,
+            "date":"today",
+            "language":"en"
+        }}
+        User:
+        Which sheds have incomplete data?
+
+        JSON:
+        {{
+            "intent":"get_missing_fields",
+            "shed":null,
+            "quantity":null,
+            "date":"today",
+            "language":"en"
         }}
 
         Now convert this:
