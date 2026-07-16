@@ -29,6 +29,26 @@ from database import (
     get_missing_fields
 )
 
+def _safe_quantity(value):
+    if value is None:
+        return None
+
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _safe_number(value):
+    if value is None:
+        return 0
+
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return 0
+
+
 def generate_daily_reminder(report_date):
 
     missing_sheds = get_missing_sheds(report_date)
@@ -145,13 +165,13 @@ def generate_period_summary(records, title):
             day_broken = 0
             day_sold = 0
 
-        birds = record.birds or 0
-        mortality = record.mortality or 0
-        feed = record.feed or 0
+        birds = _safe_number(record.birds)
+        mortality = _safe_number(record.mortality)
+        feed = _safe_number(record.feed)
 
-        produced = record.produced or 0
-        broken = record.broken or 0
-        sold = record.sold or 0
+        produced = _safe_number(record.produced)
+        broken = _safe_number(record.broken)
+        sold = _safe_number(record.sold)
 
         day_birds += birds
         day_mortality += mortality
@@ -218,7 +238,10 @@ def process_request(data):
                 "Example: 'Give summary of shed 1'."
             )
 
-        quantity = data["quantity"]
+        quantity = _safe_quantity(data.get("quantity"))
+
+        if quantity is None:
+            return "Please provide a valid quantity."
 
         report_date = data.get("date")
 
@@ -234,7 +257,10 @@ def process_request(data):
 
     elif intent == "add_broken":
 
-        quantity = data["quantity"]
+        quantity = _safe_quantity(data.get("quantity"))
+
+        if quantity is None:
+            return "Please provide a valid quantity."
 
         report_date = get_report_date(data)
 
@@ -243,9 +269,9 @@ def process_request(data):
         if record is None:
             return f"No production record found for Shed {shed} on {report_date}."
 
-        produced = record.produced or 0
-        broken = record.broken or 0
-        sold = record.sold or 0
+        produced = _safe_number(record.produced)
+        broken = _safe_number(record.broken)
+        sold = _safe_number(record.sold)
 
         available = produced - broken - sold
 
@@ -266,7 +292,10 @@ def process_request(data):
 
     elif intent == "add_sold":
 
-        quantity = data["quantity"]
+        quantity = _safe_quantity(data.get("quantity"))
+
+        if quantity is None:
+            return "Please provide a valid quantity."
 
         report_date = get_report_date(data)
 
@@ -275,9 +304,9 @@ def process_request(data):
         if record is None:
             return f"No production record found for Shed {shed} on {report_date}."
 
-        produced = record.produced or 0
-        broken = record.broken or 0
-        sold = record.sold or 0
+        produced = _safe_number(record.produced)
+        broken = _safe_number(record.broken)
+        sold = _safe_number(record.sold)
 
         available = produced - broken - sold
 
@@ -310,9 +339,9 @@ def process_request(data):
         if record is None:
             return f"No data found for Shed {shed} on {report_date}."
 
-        produced = record.produced or 0
-        broken = record.broken or 0
-        sold = record.sold or 0
+        produced = _safe_number(record.produced)
+        broken = _safe_number(record.broken)
+        sold = _safe_number(record.sold)
 
         stock = produced - broken - sold
 
@@ -407,13 +436,13 @@ def process_request(data):
 
         for record in records:
 
-            birds = record.birds or 0
-            mortality = record.mortality or 0
-            feed = record.feed or 0
+            birds = _safe_number(record.birds)
+            mortality = _safe_number(record.mortality)
+            feed = _safe_number(record.feed)
 
-            produced = record.produced or 0
-            broken = record.broken or 0
-            sold = record.sold or 0
+            produced = _safe_number(record.produced)
+            broken = _safe_number(record.broken)
+            sold = _safe_number(record.sold)
 
             stock = produced - broken - sold
 
@@ -463,10 +492,9 @@ def process_request(data):
         if record is None:
             return f"No data found for Shed {shed} on {report_date}."
         
-        produced = record.produced or 0
-        broken = record.broken or 0
-        sold = record.sold or 0
-
+        produced = _safe_number(record.produced)
+        broken = _safe_number(record.broken)
+        sold = _safe_number(record.sold)
 
         remaining = produced - broken - sold
 
@@ -505,9 +533,9 @@ def process_request(data):
 
         for record in records:
 
-            produced = record.produced or 0
-            broken = record.broken or 0
-            sold = record.sold or 0
+            produced = _safe_number(record.produced)
+            broken = _safe_number(record.broken)
+            sold = _safe_number(record.sold)
 
             stock = produced - broken - sold
 
@@ -543,7 +571,7 @@ def process_request(data):
         if not records:
             return f"No data found for {report_date}."
 
-        total_broken = sum(record.broken for record in records)
+        total_broken = sum(_safe_number(record.broken) for record in records)
 
         return (
             f"🥚 Total Broken Eggs ({report_date})\n\n"
@@ -558,7 +586,7 @@ def process_request(data):
 
         # report_date = get_report_date(data)
 
-        total = sum(record.produced for record in records)
+        total = sum(_safe_number(record.produced) for record in records)
 
         return (
             f"🥚 Total Production ({report_date})\n\n"
@@ -576,7 +604,7 @@ def process_request(data):
 
         records = get_records_by_date(report_date)
 
-        total = sum(record.sold for record in records)
+        total = sum(_safe_number(record.sold) for record in records)
 
         return (
             f"🥚 Total Sold ({report_date})\n\n"
@@ -590,9 +618,9 @@ def process_request(data):
         records = get_records_by_date(report_date)
 
         total = sum(
-            (record.produced or 0)
-            - (record.broken or 0)
-            - (record.sold or 0)
+            (_safe_number(record.produced))
+            - (_safe_number(record.broken))
+            - (_safe_number(record.sold))
             for record in records
         )
 
@@ -610,12 +638,12 @@ def process_request(data):
         if not records:
             return f"No data found for {report_date}."
 
-        highest = max(records, key=lambda r: r.produced)
+        highest = max(records, key=lambda r: _safe_number(r.produced))
 
         return (
             f"🏆 Highest Production ({report_date})\n\n"
             f"🐔 Shed {highest.shed_no}\n"
-            f"Produced : {format_quantity(highest.produced, unit)}"
+            f"Produced : {format_quantity(_safe_number(highest.produced), unit)}"
         )
     
     elif intent == "get_highest_broken":
@@ -627,12 +655,12 @@ def process_request(data):
         if not records:
             return f"No data found for {report_date}."
 
-        highest = max(records, key=lambda r: r.broken)
+        highest = max(records, key=lambda r: _safe_number(r.broken))
 
         return (
             f"🥚 Highest Broken Eggs ({report_date})\n\n"
             f"🐔 Shed {highest.shed_no}\n"
-            f"Broken : {format_quantity(highest.broken, unit)}"
+            f"Broken : {format_quantity(_safe_number(highest.broken), unit)}"
         )
 
     elif intent == "get_highest_sold":
@@ -644,12 +672,12 @@ def process_request(data):
         if not records:
             return f"No data found for {report_date}."
 
-        highest = max(records, key=lambda r: r.sold)
+        highest = max(records, key=lambda r: _safe_number(r.sold))
 
         return (
             f"🥚 Highest Sold Eggs ({report_date})\n\n"
             f"🐔 Shed {highest.shed_no}\n"
-            f"Sold : {format_quantity(highest.sold, unit)}"
+            f"Sold : {format_quantity(_safe_number(highest.sold), unit)}"
         )
 
     elif intent == "get_highest_stock":
@@ -663,10 +691,10 @@ def process_request(data):
 
         highest = max(
             records,
-            key=lambda r: r.produced - r.broken - r.sold
+            key=lambda r: _safe_number(r.produced) - _safe_number(r.broken) - _safe_number(r.sold)
         )
 
-        stock = highest.produced - highest.broken - highest.sold
+        stock = _safe_number(highest.produced) - _safe_number(highest.broken) - _safe_number(highest.sold)
 
         return (
             f"📦 Highest Stock ({report_date})\n\n"
@@ -683,12 +711,12 @@ def process_request(data):
         if not records:
             return f"No data found for {report_date}."
 
-        lowest = min(records, key=lambda r: r.produced)
+        lowest = min(records, key=lambda r: _safe_number(r.produced))
 
         return (
             f"📉 Lowest Production ({report_date})\n\n"
             f"🐔 Shed {lowest.shed_no}\n"
-            f"Produced : {format_quantity(lowest.produced, unit)}"
+            f"Produced : {format_quantity(_safe_number(lowest.produced), unit)}"
         )
 
     elif intent == "get_lowest_broken":
@@ -700,12 +728,12 @@ def process_request(data):
         if not records:
             return f"No data found for {report_date}."
 
-        lowest = min(records, key=lambda r: r.broken)
+        lowest = min(records, key=lambda r: _safe_number(r.broken))
 
         return (
             f"📉 Lowest Broken Eggs ({report_date})\n\n"
             f"🐔 Shed {lowest.shed_no}\n"
-            f"Broken : {format_quantity(lowest.broken, unit)}"
+            f"Broken : {format_quantity(_safe_number(lowest.broken), unit)}"
         )
 
     elif intent == "get_lowest_sold":
@@ -717,12 +745,12 @@ def process_request(data):
         if not records:
             return f"No data found for {report_date}."
 
-        lowest = min(records, key=lambda r: r.sold)
+        lowest = min(records, key=lambda r: _safe_number(r.sold))
 
         return (
             f"📉 Lowest Sold Eggs ({report_date})\n\n"
             f"🐔 Shed {lowest.shed_no}\n"
-            f"Sold : {format_quantity(lowest.sold, unit)}"
+            f"Sold : {format_quantity(_safe_number(lowest.sold), unit)}"
         )
 
     elif intent == "get_lowest_stock":
@@ -736,10 +764,10 @@ def process_request(data):
 
         lowest = min(
             records,
-            key=lambda r: r.produced - r.broken - r.sold
+            key=lambda r: _safe_number(r.produced) - _safe_number(r.broken) - _safe_number(r.sold)
         )
 
-        stock = lowest.produced - lowest.broken - lowest.sold
+        stock = _safe_number(lowest.produced) - _safe_number(lowest.broken) - _safe_number(lowest.sold)
 
         return (
             f"📉 Lowest Stock ({report_date})\n\n"

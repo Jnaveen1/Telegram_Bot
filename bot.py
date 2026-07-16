@@ -11,7 +11,7 @@ from llm import understand_message, translate_response
 from service import process_request
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
-
+    print("CHAT ID:", update.effective_chat.id)
     message = update.message.text
 
     print("Received:", message)
