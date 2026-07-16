@@ -214,19 +214,35 @@ def get_weekly_summary(period):
 
     return records
 
-def get_monthly_summary():
+def get_monthly_summary(period):
 
     db = SessionLocal()
 
     today = date.today()
 
-    start_date = today.replace(day=1)
+    if period == "this_month":
+
+        start_date = today.replace(day=1)
+        end_date = today
+
+    elif period == "last_month":
+
+        first_day_this_month = today.replace(day=1)
+
+        end_date = first_day_this_month - timedelta(days=1)
+
+        start_date = end_date.replace(day=1)
+
+    else:
+
+        db.close()
+        return []
 
     records = (
         db.query(EggRecord)
         .filter(
             EggRecord.date >= str(start_date),
-            EggRecord.date <= str(today)
+            EggRecord.date <= str(end_date)
         )
         .order_by(EggRecord.date, EggRecord.shed_no)
         .all()
@@ -561,7 +577,24 @@ def add_mortality(shed_no, quantity, report_date):
 
         else:
 
-            record.mortality = (record.mortality or 0) + quantity
+            birds = record.birds or 0
+            if birds is None:
+                db.close()
+                return (
+                    "❌ Please enter the bird count first before recording mortality."
+                )
+            current_mortality = record.mortality or 0
+
+            if current_mortality + quantity > birds:
+
+                db.close()
+
+                return (
+                    f"❌ Cannot record {quantity} mortality.\n"
+                    f"Only {birds - current_mortality} live birds remaining in Shed {shed_no}."
+                )
+
+            record.mortality = current_mortality + quantity
 
         db.commit()
         db.close()
@@ -757,4 +790,157 @@ def get_missing_fields(report_date):
             result[shed] = missing
 
     return result
+
+def get_comparison_summary(report_date):
+
+    db = SessionLocal()
+
+    records = (
+        db.query(EggRecord)
+        .filter(EggRecord.date == report_date)
+        .all()
+    )
+
+    db.close()
+
+    summary = {
+        "birds": 0,
+        "mortality": 0,
+        "feed": 0,
+        "produced": 0,
+        "broken": 0,
+        "sold": 0
+    }
+
+    for record in records:
+
+        summary["birds"] += record.birds or 0
+        summary["mortality"] += record.mortality or 0
+        summary["feed"] += record.feed or 0
+
+        summary["produced"] += record.produced or 0
+        summary["broken"] += record.broken or 0
+        summary["sold"] += record.sold or 0
+
+    summary["stock"] = (
+        summary["produced"]
+        - summary["broken"]
+        - summary["sold"]
+    )
+
+    summary["live_birds"] = (
+        summary["birds"]
+        - summary["mortality"]
+    )
+
+    return summary
+
+def get_week_comparison_summary(period):
+
+    records = get_weekly_summary(period)
+
+    summary = {
+        "birds": 0,
+        "live_birds": 0,
+        "mortality": 0,
+        "feed": 0,
+        "produced": 0,
+        "broken": 0,
+        "sold": 0,
+        "stock": 0
+    }
+
+    for record in records:
+
+        summary["birds"] += record.birds or 0
+        summary["mortality"] += record.mortality or 0
+        summary["feed"] += record.feed or 0
+
+        summary["produced"] += record.produced or 0
+        summary["broken"] += record.broken or 0
+        summary["sold"] += record.sold or 0
+
+    summary["stock"] = (
+        summary["produced"]
+        - summary["broken"]
+        - summary["sold"]
+    )
+
+    summary["live_birds"] = (
+        summary["birds"]
+        - summary["mortality"]
+    )
+
+    return summary
+
+def get_highest(field, report_date):
+
+    db = SessionLocal()
+
+    record = (
+        db.query(EggRecord)
+        .filter(EggRecord.date == report_date)
+        .order_by(getattr(EggRecord, field).desc())
+        .first()
+    )
+
+    db.close()
+
+    return record
+
+
+def get_lowest(field, report_date):
+
+    db = SessionLocal()
+
+    record = (
+        db.query(EggRecord)
+        .filter(EggRecord.date == report_date)
+        .order_by(getattr(EggRecord, field).asc())
+        .first()
+    )
+
+    db.close()
+
+    return record
+
+
+def get_month_comparison_summary(period):
+
+    records = get_monthly_summary(period)
+
+    summary = {
+        "birds": 0,
+        "live_birds": 0,
+        "mortality": 0,
+        "feed": 0,
+        "produced": 0,
+        "broken": 0,
+        "sold": 0,
+        "stock": 0
+    }
+
+    for record in records:
+
+        summary["birds"] += record.birds or 0
+        summary["mortality"] += record.mortality or 0
+        summary["feed"] += record.feed or 0
+
+        summary["produced"] += record.produced or 0
+        summary["broken"] += record.broken or 0
+        summary["sold"] += record.sold or 0
+
+    summary["stock"] = (
+        summary["produced"]
+        - summary["broken"]
+        - summary["sold"]
+    )
+
+    summary["live_birds"] = (
+        summary["birds"]
+        - summary["mortality"]
+    )
+
+    return summary
+
 

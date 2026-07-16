@@ -26,7 +26,11 @@ from database import (
     get_total_feed ,
     get_total_live_birds , 
     get_missing_sheds,
-    get_missing_fields
+    get_missing_fields , 
+    get_comparison_summary , 
+    get_week_comparison_summary , 
+    get_highest, get_lowest , 
+    get_month_comparison_summary
 )
 
 def _safe_quantity(value):
@@ -38,7 +42,6 @@ def _safe_quantity(value):
     except (TypeError, ValueError):
         return None
 
-
 def _safe_number(value):
     if value is None:
         return 0
@@ -47,7 +50,6 @@ def _safe_number(value):
         return int(value)
     except (TypeError, ValueError):
         return 0
-
 
 def generate_daily_reminder(report_date):
 
@@ -216,10 +218,27 @@ def generate_period_summary(records, title):
 
     return reply
 
+def get_records_for_period(data):
+
+    period = data["date"]
+
+    if period == "this_week":
+        return get_weekly_summary("this_week"), "This Week"
+
+    elif period == "last_week":
+        return get_weekly_summary("last_week"), "Last Week"
+
+    elif period == "this_month":
+        return get_monthly_summary(), "This Month"
+
+    else:
+        report_date = get_report_date(data)
+        return get_records_by_date(report_date), report_date
+
 def process_request(data):
 
-    intent = data["intent"]
-    shed = data["shed"]
+    intent = data.get("intent")
+    shed = data.get("shed")
     unit = data.get("unit", "egg")
 
     # ---------------- ADD PRODUCTION ----------------
@@ -242,6 +261,14 @@ def process_request(data):
 
         if quantity is None:
             return "Please provide a valid quantity."
+        
+        quantity = data["quantity"]
+
+        if quantity < 0:
+            return (
+                "❌ Quantity cannot be negative.\n"
+                "Please enter a positive value."
+            )
 
         report_date = data.get("date")
 
@@ -261,6 +288,14 @@ def process_request(data):
 
         if quantity is None:
             return "Please provide a valid quantity."
+        
+        quantity = data["quantity"]
+
+        if quantity < 0:
+            return (
+                "❌ Quantity cannot be negative.\n"
+                "Please enter a positive value."
+            )
 
         report_date = get_report_date(data)
 
@@ -296,6 +331,12 @@ def process_request(data):
 
         if quantity is None:
             return "Please provide a valid quantity."
+        
+        if quantity < 0:
+            return (
+                "❌ Quantity cannot be negative.\n"
+                "Please enter a positive value."
+            )
 
         report_date = get_report_date(data)
 
@@ -564,53 +605,46 @@ def process_request(data):
 
     elif intent == "get_total_broken":
 
-        report_date = get_report_date(data)
+        records, title = get_records_for_period(data)
 
-        records = get_records_by_date(report_date)
-
-        if not records:
-            return f"No data found for {report_date}."
-
-        total_broken = sum(_safe_number(record.broken) for record in records)
+        total = sum(
+            _safe_number(record.broken)
+            for record in records
+        )
 
         return (
-            f"🥚 Total Broken Eggs ({report_date})\n\n"
-            f"{format_quantity(total_broken, unit)}"
+            f"❌ Total Broken ({title})\n\n"
+            f"{format_quantity(total, unit)}"
         )
     
     elif intent == "get_total_production":
 
-        report_date = get_report_date(data)
+        records, title = get_records_for_period(data)
 
-        records = get_records_by_date(report_date)
-
-        # report_date = get_report_date(data)
-
-        total = sum(_safe_number(record.produced) for record in records)
+        total = sum(
+            _safe_number(record.produced)
+            for record in records
+        )
 
         return (
-            f"🥚 Total Production ({report_date})\n\n"
+            f"🥚 Total Production ({title})\n\n"
             f"{format_quantity(total, unit)}"
         )
 
     elif intent == "get_total_sold":
 
-        report_date = get_report_date(data)
-        if report_date is None or report_date == "today":
-            report_date = str(date.today())
+        records, title = get_records_for_period(data)
 
-        elif report_date == "yesterday":
-            report_date = str(date.today() - timedelta(days=1))
-
-        records = get_records_by_date(report_date)
-
-        total = sum(_safe_number(record.sold) for record in records)
-
-        return (
-            f"🥚 Total Sold ({report_date})\n\n"
-            f"{format_quantity(total, unit)}"
+        total = sum(
+            _safe_number(record.sold)
+            for record in records
         )
 
+        return (
+            f"📦 Total Sold ({title})\n\n"
+            f"{format_quantity(total, unit)}"
+        )
+    
     elif intent == "get_total_remaining":
 
         report_date = get_report_date(data)
@@ -701,6 +735,51 @@ def process_request(data):
             f"🐔 Shed {highest.shed_no}\n"
             f"Stock : {format_quantity(stock, unit)}"
         )
+    
+    elif intent == "get_highest_feed":
+
+        report_date = get_report_date(data)
+
+        record = get_highest("feed", report_date)
+
+        if record is None:
+            return f"No data found for {report_date}."
+
+        return (
+            f"🏆 Highest Feed ({report_date})\n\n"
+            f"🐔 Shed {record.shed_no}\n"
+            f"🌾 Feed : {record.feed} kg"
+        )
+
+    elif intent == "get_highest_mortality":
+
+        report_date = get_report_date(data)
+
+        record = get_highest("mortality", report_date)
+
+        if record is None:
+            return f"No data found for {report_date}."
+
+        return (
+            f"🏆 Highest Mortality ({report_date})\n\n"
+            f"🐔 Shed {record.shed_no}\n"
+            f"💀 Mortality : {record.mortality}"
+        )
+
+    elif intent == "get_highest_birds":
+
+        report_date = get_report_date(data)
+
+        record = get_highest("birds", report_date)
+
+        if record is None:
+            return f"No data found for {report_date}."
+
+        return (
+            f"🏆 Highest Bird Count ({report_date})\n\n"
+            f"🐔 Shed {record.shed_no}\n"
+            f"Birds : {record.birds}"
+        )
 
     elif intent == "get_lowest_production":
 
@@ -775,6 +854,51 @@ def process_request(data):
             f"Stock : {format_quantity(stock, unit)}"
         )
 
+    elif intent == "get_lowest_mortality":
+
+        report_date = get_report_date(data)
+
+        record = get_lowest("mortality", report_date)
+
+        if record is None:
+            return f"No data found for {report_date}."
+
+        return (
+            f"📉 Lowest Mortality ({report_date})\n\n"
+            f"🐔 Shed {record.shed_no}\n"
+            f"💀 Mortality : {_safe_number(record.mortality)} birds"
+        )
+
+    elif intent == "get_lowest_feed":
+
+        report_date = get_report_date(data)
+
+        record = get_lowest("feed", report_date)
+
+        if record is None:
+            return f"No data found for {report_date}."
+
+        return (
+            f"📉 Lowest Feed ({report_date})\n\n"
+            f"🐔 Shed {record.shed_no}\n"
+            f"🌾 Feed : {_safe_number(record.feed)} kg"
+        )
+
+    elif intent == "get_lowest_birds":
+
+        report_date = get_report_date(data)
+
+        record = get_lowest("birds", report_date)
+
+        if record is None:
+            return f"No data found for {report_date}."
+
+        return (
+            f"📉 Lowest Bird Count ({report_date})\n\n"
+            f"🐔 Shed {record.shed_no}\n"
+            f"🐔 Birds : {_safe_number(record.birds)}"
+        )
+
     elif intent == "get_weekly_summary":
 
         period = data.get("date", "this_week")
@@ -790,12 +914,16 @@ def process_request(data):
 
     elif intent == "get_monthly_summary":
 
-        records = get_monthly_summary()
+        period = data["date"]
 
-        return generate_period_summary(
-            records,
-            "📅 Monthly Report"
-        )
+        records = get_monthly_summary(period)
+
+        if period == "this_month":
+            title = "📊 This Month Summary"
+        else:
+            title = "📊 Last Month Summary"
+
+        return generate_period_summary(records, title)
 
     elif intent == "move_record":
 
@@ -804,7 +932,7 @@ def process_request(data):
         field = data["field"]
         quantity = data["quantity"]
 
-        report_date = data.get("date")
+        report_date = get_report_date(data)
 
         result = move_record(
             from_shed,
@@ -830,7 +958,7 @@ def process_request(data):
         field = data["field"]
         quantity = data["quantity"]
 
-        report_date = data.get("date")
+        report_date = get_report_date(data)
 
         result = update_record(
             shed,
@@ -854,7 +982,7 @@ def process_request(data):
         field = data["field"]
         quantity = data["quantity"]
 
-        report_date = data.get("date")
+        report_date = get_report_date(data)
 
         result = remove_record(
             shed,
@@ -877,7 +1005,7 @@ def process_request(data):
         shed = data["shed"]
         field = data["field"]
 
-        report_date = data.get("date")
+        report_date = get_report_date(data)
 
         result = delete_field(
             shed,
@@ -898,7 +1026,7 @@ def process_request(data):
 
         shed = data["shed"]
 
-        report_date = data.get("date")
+        report_date = get_report_date(data)
 
         result = delete_record(
             shed,
@@ -919,8 +1047,13 @@ def process_request(data):
 
         shed = data["shed"]
         quantity = data["quantity"]
+        if quantity < 0:
+            return (
+                "❌ Quantity cannot be negative.\n"
+                "Please enter a positive value."
+            )
 
-        report_date = data.get("date")
+        report_date = get_report_date(data)
 
         result = add_birds(
             shed,
@@ -934,7 +1067,7 @@ def process_request(data):
 
         shed = data["shed"]
         
-        report_date = data.get("date")
+        report_date = get_report_date(data)
 
         # <-- This part must be OUTSIDE the if/elif
 
@@ -952,19 +1085,17 @@ def process_request(data):
         )
 
     elif intent == "get_total_birds":
-        report_date = data.get("date")
 
-        if report_date is None or report_date == "today":
-            report_date = str(date.today())
+        records, title = get_records_for_period(data)
 
-        elif report_date == "yesterday":
-            report_date = str(date.today() - timedelta(days=1))
-
-        total = get_total_birds(report_date)
+        total = sum(
+            _safe_number(record.birds)
+            for record in records
+        )
 
         return (
-            f"🐔 Total Birds ({report_date})\n\n"
-            f"{total} birds"
+            f"🐔 Total Birds ({title})\n\n"
+            f"{total}"
         )
 
     elif intent == "add_mortality":
@@ -972,6 +1103,12 @@ def process_request(data):
         shed = data["shed"]
         report_date = get_report_date(data)
         quantity = data["quantity"]
+
+        if quantity < 0:
+            return (
+                "❌ Quantity cannot be negative.\n"
+                "Please enter a positive value."
+            )
 
         result = add_mortality(
             shed,
@@ -996,18 +1133,29 @@ def process_request(data):
         )
     
     elif intent == "get_total_mortality":
-        report_date = get_report_date(data)
-        total = get_total_mortality(report_date)
+
+        records, title = get_records_for_period(data)
+
+        total = sum(
+            _safe_number(record.mortality)
+            for record in records
+        )
 
         return (
-            f"🐔 Total Mortality ({report_date})\n\n"
-            f"{total} birds"
+            f"💀 Total Mortality ({title})\n\n"
+            f"{total}"
         )
     
     elif intent == "add_feed":
 
         shed = data["shed"]
         quantity = data["quantity"]
+
+        if quantity < 0:
+            return (
+                "❌ Quantity cannot be negative.\n"
+                "Please enter a positive value."
+            )
 
         report_date = get_report_date(data)
         
@@ -1037,12 +1185,15 @@ def process_request(data):
     
     elif intent == "get_total_feed":
 
-        report_date = get_report_date(data)
+        records, title = get_records_for_period(data)
 
-        total = get_total_feed(report_date)
+        total = sum(
+            _safe_number(record.feed)
+            for record in records
+        )
 
         return (
-            f"🌾 Total Feed ({report_date})\n\n"
+            f"🌾 Total Feed ({title})\n\n"
             f"{total} kg"
         )
     
@@ -1100,3 +1251,210 @@ def process_request(data):
             reply += "\n"
 
         return reply
+    
+    elif intent == "compare_dates":
+
+        date1 = data["date1"]
+        date2 = data["date2"]
+
+        # Convert relative dates
+        if date1 == "today":
+            date1 = str(date.today())
+        elif date1 == "yesterday":
+            date1 = str(date.today() - timedelta(days=1))
+
+        if date2 == "today":
+            date2 = str(date.today())
+        elif date2 == "yesterday":
+            date2 = str(date.today() - timedelta(days=1))
+
+        summary1 = get_comparison_summary(date1)
+        summary2 = get_comparison_summary(date2)
+        field = data.get("field")
+        if field:
+
+            value1 = summary1[field]
+            value2 = summary2[field]
+
+            difference = value1 - value2
+
+            return (
+                f"{field.title()} Comparison\n\n"
+                f"{date1}: {value1}\n"
+                f"{date2}: {value2}\n\n"
+                f"Difference: {difference:+}"
+            )
+
+        reply = (
+            f"📊 Date Comparison\n\n"
+            f"{date1}  ↔  {date2}\n\n"
+
+            f"🐔 Birds\n"
+            f"{summary1['birds']} → {summary2['birds']}\n\n"
+
+            f"🐥 Live Birds\n"
+            f"{summary1['live_birds']} → {summary2['live_birds']}\n\n"
+
+            f"💀 Mortality\n"
+            f"{summary1['mortality']} → {summary2['mortality']}\n\n"
+
+            f"🌾 Feed\n"
+            f"{summary1['feed']} kg → {summary2['feed']} kg\n\n"
+
+            f"🥚 Produced\n"
+            f"{summary1['produced']} → {summary2['produced']}\n\n"
+
+            f"❌ Broken\n"
+            f"{summary1['broken']} → {summary2['broken']}\n\n"
+
+            f"📦 Sold\n"
+            f"{summary1['sold']} → {summary2['sold']}\n\n"
+
+            f"📦 Stock\n"
+            f"{summary1['stock']} → {summary2['stock']}"
+        )
+
+        return reply
+    
+    elif intent == "compare_weeks":
+
+        week1 = data["week1"]
+        week2 = data["week2"]
+
+        summary1 = get_week_comparison_summary(week1)
+        summary2 = get_week_comparison_summary(week2)
+
+        field = data.get("field")
+
+        if field:
+
+            value1 = summary1[field]
+            value2 = summary2[field]
+
+            difference = value1 - value2
+
+            if difference > 0:
+                status = f"📈 Increased by {difference}"
+            elif difference < 0:
+                status = f"📉 Decreased by {abs(difference)}"
+            else:
+                status = "➖ No Change"
+
+            unit = ""
+
+            if field == "feed":
+                unit = " kg"
+
+            elif field in ["produced", "broken", "sold", "stock"]:
+                unit = " eggs"
+
+            elif field in ["birds", "live_birds", "mortality"]:
+                unit = " birds"
+
+            return (
+                f"📊 {field.replace('_',' ').title()} Weekly Comparison\n\n"
+                f"{week1} : {value1}{unit}\n"
+                f"{week2} : {value2}{unit}\n\n"
+                f"{status}"
+            )
+
+        return (
+            f"📊 Weekly Comparison\n\n"
+            f"{week1} ↔ {week2}\n\n"
+
+            f"🐔 Birds\n"
+            f"{summary1['birds']} → {summary2['birds']}\n\n"
+
+            f"🐥 Live Birds\n"
+            f"{summary1['live_birds']} → {summary2['live_birds']}\n\n"
+
+            f"💀 Mortality\n"
+            f"{summary1['mortality']} → {summary2['mortality']}\n\n"
+
+            f"🌾 Feed\n"
+            f"{summary1['feed']} kg → {summary2['feed']} kg\n\n"
+
+            f"🥚 Produced\n"
+            f"{summary1['produced']} → {summary2['produced']}\n\n"
+
+            f"❌ Broken\n"
+            f"{summary1['broken']} → {summary2['broken']}\n\n"
+
+            f"📦 Sold\n"
+            f"{summary1['sold']} → {summary2['sold']}\n\n"
+
+            f"📦 Stock\n"
+            f"{summary1['stock']} → {summary2['stock']}"
+        )
+
+    elif intent == "compare_months":
+
+        month1 = data["month1"]
+        month2 = data["month2"]
+
+        summary1 = get_month_comparison_summary(month1)
+        summary2 = get_month_comparison_summary(month2)
+
+        field = data.get("field")
+
+        if field:
+
+            value1 = summary1[field]
+            value2 = summary2[field]
+
+            difference = value1 - value2
+
+            if difference > 0:
+                status = f"📈 Increased by {difference}"
+            elif difference < 0:
+                status = f"📉 Decreased by {abs(difference)}"
+            else:
+                status = "➖ No Change"
+
+            unit = ""
+
+            if field == "feed":
+                unit = " kg"
+
+            elif field in ["produced", "broken", "sold", "stock"]:
+                unit = " eggs"
+
+            elif field in ["birds", "live_birds", "mortality"]:
+                unit = " birds"
+
+            return (
+                f"📊 {field.replace('_',' ').title()} Monthly Comparison\n\n"
+                f"{month1} : {value1}{unit}\n"
+                f"{month2} : {value2}{unit}\n\n"
+                f"{status}"
+            )
+
+        return (
+            f"📊 Monthly Comparison\n\n"
+
+            f"{month1} ↔ {month2}\n\n"
+
+            f"🐔 Birds\n"
+            f"{summary1['birds']} → {summary2['birds']}\n\n"
+
+            f"🐥 Live Birds\n"
+            f"{summary1['live_birds']} → {summary2['live_birds']}\n\n"
+
+            f"💀 Mortality\n"
+            f"{summary1['mortality']} → {summary2['mortality']}\n\n"
+
+            f"🌾 Feed\n"
+            f"{summary1['feed']} kg → {summary2['feed']} kg\n\n"
+
+            f"🥚 Produced\n"
+            f"{summary1['produced']} → {summary2['produced']}\n\n"
+
+            f"❌ Broken\n"
+            f"{summary1['broken']} → {summary2['broken']}\n\n"
+
+            f"📦 Sold\n"
+            f"{summary1['sold']} → {summary2['sold']}\n\n"
+
+            f"📦 Stock\n"
+            f"{summary1['stock']} → {summary2['stock']}"
+        )

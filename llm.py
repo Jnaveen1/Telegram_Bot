@@ -1103,6 +1103,88 @@ def understand_message(message):
             "language":"en"
         }}
 
+        Intent: compare_dates
+
+        Examples:
+
+        User: Compare today and yesterday
+
+        Output:
+        {{
+            "intent": "compare_dates",
+            "date1": "today",
+            "date2": "yesterday"
+        }}
+
+        User: Compare today and 14th July
+
+        Output:
+        {{
+            "intent": "compare_dates",
+            "date1": "today",
+            "date2": "2026-07-14"
+        }}
+
+        User: Compare 14-07-2026 and 15-07-2026
+
+        Output:
+        {{
+            "intent": "compare_dates",
+            "date1": "2026-07-14",
+            "date2": "2026-07-15"
+        }}
+
+        Compare production today and yesterday
+
+        output:
+        {{
+            "intent":"compare_dates",
+            "date1":"today",
+            "date2":"yesterday",
+            "field":"produced"
+        }}
+
+        User:
+        Compare this week and last week
+
+        Output:
+        {{
+            "intent":"compare_weeks",
+            "week1":"this_week",
+            "week2":"last_week"
+        }}
+
+        User:
+        Compare last week and this week
+
+        Output:
+        {{
+            "intent":"compare_weeks",
+            "week1":"last_week",
+            "week2":"this_week"
+        }}
+
+        User:
+        Compare this week's production with last week
+
+        Output:
+        {{
+            "intent":"compare_weeks",
+            "week1":"this_week",
+            "week2":"last_week",
+            "field":"produced"
+        }}
+
+        User:
+        Compare this month and last month
+
+        Output:
+        {{
+            "intent":"compare_months",
+            "month1":"this_month",
+            "month2":"last_month"
+        }}
+
         Now convert this:
 
         {message}
@@ -1115,3 +1197,4 @@ def understand_message(message):
     text = text.replace("```json", "").replace("```", "").strip()
 
     return json.loads(text)
+
