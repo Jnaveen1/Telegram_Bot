@@ -2,8 +2,8 @@ from sqlalchemy import create_engine , func , or_
 from sqlalchemy.orm import sessionmaker
 from base import Base
 from datetime import date , timedelta
-from models import EggRecord
-
+from models import EggRecord , MedicineStock, FeedStock
+from difflib import get_close_matches
 
 DATABASE_URL = "sqlite:///egg_database.db"
 
@@ -13,7 +13,11 @@ engine = create_engine(
 )
 
 SessionLocal = sessionmaker(
-    bind=engine
+    autocommit=False,
+    autoflush=False,
+    bind=engine, 
+    expire_on_commit=False
+
 )
 
 def create_database():
@@ -45,7 +49,6 @@ def add_production(shed_no, quantity, report_date):
     db.commit()
     db.close()
 
-
 def add_broken(shed_no, quantity, report_date):
 
     db = SessionLocal()
@@ -71,7 +74,6 @@ def add_broken(shed_no, quantity, report_date):
 
     db.commit()
     db.close()
-
 
 def add_sold(shed_no, quantity, report_date):
 
@@ -888,7 +890,6 @@ def get_highest(field, report_date):
 
     return record
 
-
 def get_lowest(field, report_date):
 
     db = SessionLocal()
@@ -903,7 +904,6 @@ def get_lowest(field, report_date):
     db.close()
 
     return record
-
 
 def get_month_comparison_summary(period):
 
@@ -942,5 +942,439 @@ def get_month_comparison_summary(period):
     )
 
     return summary
+
+def find_medicine(db, shed_no, medicine_name):
+
+    medicines = (
+        db.query(MedicineStock)
+        .filter(
+            MedicineStock.shed_no == shed_no
+        )
+        .all()
+    )
+
+    names = [m.medicine_name for m in medicines]
+
+    match = get_close_matches(
+        medicine_name,
+        names,
+        n=1,
+        cutoff=0.6
+    )
+
+    if not match:
+        return None
+
+    return (
+        db.query(MedicineStock)
+        .filter(
+            MedicineStock.shed_no == shed_no,
+            MedicineStock.medicine_name == match[0]
+        )
+        .first()
+    )
+
+def add_medicine(shed_no, medicine_name, quantity, unit):
+
+    db = SessionLocal()
+
+    try:
+
+        medicine = (
+            db.query(MedicineStock)
+            .filter(
+                MedicineStock.shed_no == shed_no,
+                MedicineStock.medicine_name == medicine_name
+            )
+            .first()
+        )
+
+        if medicine is None:
+
+            medicine = MedicineStock(
+                shed_no=shed_no,
+                medicine_name=medicine_name,
+                available=quantity,
+                used=0,
+                unit=unit
+            )
+
+            db.add(medicine)
+
+        else:
+
+            medicine.available += quantity
+
+        db.commit()
+
+        db.close()
+
+        return (
+            f"✅ Added {quantity} {unit} of {medicine_name}\n"
+            f"to Shed {shed_no}"
+        )
+
+    except Exception as e:
+
+        db.rollback()
+
+        db.close()
+
+        return str(e)
+
+def use_medicine(shed_no, medicine_name, quantity):
+
+    db = SessionLocal()
+
+    try:
+
+        medicine = find_medicine(
+            db,
+            shed_no,
+            medicine_name
+        )
+
+        if medicine is None:
+
+            db.close()
+
+            return (
+                f"{medicine_name} not found "
+                f"in Shed {shed_no}."
+            )
+
+        remaining = (
+            medicine.available
+            - medicine.used
+        )
+
+        if quantity > remaining:
+
+            db.close()
+
+            return (
+                f"Only {remaining} {medicine.unit} "
+                f"remaining."
+            )
+
+        medicine.used += quantity
+
+        db.commit()
+
+        db.close()
+
+        return (
+            f"✅ Used {quantity} {medicine.unit} "
+            f"of {medicine_name}"
+        )
+
+    except Exception as e:
+
+        db.rollback()
+
+        db.close()
+
+        return str(e) 
+
+def get_medicine(shed_no, medicine_name):
+
+    db = SessionLocal()
+
+    medicine = find_medicine(
+        db,
+        shed_no,
+        medicine_name
+    )
+
+    if medicine is None:
+        db.close()
+        return None
+
+    result = {
+        "medicine_name": medicine.medicine_name,
+        "available": medicine.available,
+        "used": medicine.used,
+        "unit": medicine.unit
+    }
+
+    db.close()
+
+    return result
+
+def get_all_medicines(shed_no=None):
+
+    db = SessionLocal()
+
+    query = db.query(MedicineStock)
+
+    if shed_no is not None:
+        query = query.filter(
+            MedicineStock.shed_no == shed_no
+        )
+
+    medicines = query.order_by(
+        MedicineStock.shed_no,
+        MedicineStock.medicine_name
+    ).all()
+
+    db.close()
+
+    return medicines
+
+def get_medicine_totals_kg():
+
+    db = SessionLocal()
+
+    medicines = db.query(MedicineStock).all()
+
+    db.close()
+
+    total_available = 0
+    total_used = 0
+
+    for med in medicines:
+
+        unit = med.unit.lower()
+
+        available = med.available
+        used = med.used
+
+        if unit == "kg":
+            factor = 1
+
+        elif unit == "ml":
+            factor = 0.001
+
+        elif unit == "bottle":
+            factor = 2
+
+        else:
+            factor = 1
+
+        total_available += available * factor
+        total_used += used * factor
+
+    total_remaining = total_available - total_used
+
+    return (
+        round(total_available, 2),
+        round(total_used, 2),
+        round(total_remaining, 2)
+    )
+
+
+# def get_daily_summary(report_date):
+
+#     session = SessionLocal()
+
+#     try:
+#         records = session.query(EggRecord)\
+#             .filter(
+#                 EggRecord.date == report_date
+#             )\
+#             .order_by(EggRecord.shed)\
+#             .all()
+
+#         return records
+
+#     finally:
+#         session.close()
+
+# def find_feed(db, shed_no, feed_name):
+
+#     if not feed_name:
+#         return None
+
+#     feeds = (
+#         db.query(FeedStock)
+#         .filter(
+#             FeedStock.shed_no == shed_no
+#         )
+#         .all()
+#     )
+
+#     names = [
+#         feed.feed_name
+#         for feed in feeds
+#     ]
+
+#     match = get_close_matches(
+#         feed_name,
+#         names,
+#         n=1,
+#         cutoff=0.6
+#     )
+
+#     if not match:
+#         return None
+
+#     return (
+#         db.query(FeedStock)
+#         .filter(
+#             FeedStock.shed_no == shed_no,
+#             FeedStock.feed_name == match[0]
+#         )
+#         .first()
+#     )
+
+# def add_feed(shed_no, feed_name, quantity, unit, report_date):
+
+#     db = SessionLocal()
+
+#     try:
+
+#         feed = (
+#             db.query(FeedStock)
+#             .filter(
+#                 FeedStock.shed_no == shed_no,
+#                 FeedStock.feed_name == feed_name,
+#                 FeedStock.date == report_date
+#             )
+#             .first()
+#         )
+
+#         if feed is None:
+
+#             feed = FeedStock(
+#                 shed_no=shed_no,
+#                 date=report_date,
+#                 feed_name=feed_name,
+#                 available=quantity,
+#                 used=0,
+#                 unit=unit
+#             )
+
+#             db.add(feed)
+
+#         else:
+
+#             feed.available += quantity
+
+#         db.commit()
+
+#         db.close()
+
+#         return (
+#             f"✅ Added {quantity} {unit} of "
+#             f"{feed_name} to Shed {shed_no}"
+#         )
+
+#     except Exception as e:
+
+#         db.rollback()
+
+#         db.close()
+
+#         return str(e)
+    
+# def use_feed(shed_no, feed_name, quantity):
+
+#     db = SessionLocal()
+
+#     try:
+
+#         feed = find_feed(
+#             db,
+#             shed_no,
+#             feed_name
+#         )
+
+#         if feed is None:
+
+#             db.close()
+
+#             return (
+#                 f"{feed_name} not found "
+#                 f"in Shed {shed_no}."
+#             )
+
+#         remaining = (
+#             feed.available
+#             - feed.used
+#         )
+
+#         if quantity > remaining:
+
+#             db.close()
+
+#             return (
+#                 f"Only {remaining} {feed.unit} "
+#                 f"remaining."
+#             )
+
+#         feed.used += quantity
+
+#         db.commit()
+
+#         db.close()
+
+#         return (
+#             f"✅ Used {quantity} {feed.unit} "
+#             f"of {feed.feed_name}"
+#         )
+
+#     except Exception as e:
+
+#         db.rollback()
+
+#         db.close()
+
+#         return str(e)
+    
+# def get_feed(shed_no, feed_name):
+
+#     db = SessionLocal()
+
+#     feed = find_feed(
+#         db,
+#         shed_no,
+#         feed_name
+#     )
+
+#     if feed is None:
+
+#         db.close()
+
+#         return None
+
+#     result = {
+
+#         "feed_name": feed.feed_name,
+
+#         "available": feed.available,
+
+#         "used": feed.used,
+
+#         "unit": feed.unit
+#     }
+
+#     db.close()
+
+#     return result
+
+
+# def get_all_feeds(shed_no=None):
+
+#     db = SessionLocal()
+
+#     query = db.query(FeedStock)
+
+#     if shed_no is not None:
+
+#         query = query.filter(
+#             FeedStock.shed_no == shed_no
+#         )
+
+#     feeds = (
+#         query.order_by(
+#             FeedStock.shed_no,
+#             FeedStock.feed_name
+#         )
+#         .all()
+#     )
+
+#     db.close()
+
+#     return feeds
 
 

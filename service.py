@@ -1,4 +1,5 @@
 from datetime import date, timedelta
+from tabulate import tabulate 
 from database import (
     add_production,
     add_broken,
@@ -30,8 +31,53 @@ from database import (
     get_comparison_summary , 
     get_week_comparison_summary , 
     get_highest, get_lowest , 
-    get_month_comparison_summary
+    get_month_comparison_summary, 
+    add_medicine,
+    use_medicine,
+    get_medicine,
+    get_all_medicines, 
+    add_feed,
+    get_feed,
+    get_medicine_totals_kg
+
 )
+
+def format_report_table(records):
+
+    lines = []
+
+    lines.append(
+        f"{'Shed':<5} {'Birds':>6} {'Eggs':>6} {'Broken':>7} {'Sold':>6} {'Stock':>7}"
+    )
+
+    lines.append("-" * 45)
+
+    for record in records:
+
+        birds = record.birds or 0
+        produced = record.produced or 0
+        broken = record.broken or 0
+        sold = record.sold or 0
+
+        stock = produced - broken - sold
+
+        lines.append(
+
+            f"{record.shed_no:<5}"
+
+            f"{birds:>7}"
+
+            f"{produced:>7}"
+
+            f"{broken:>8}"
+
+            f"{sold:>7}"
+
+            f"{stock:>8}"
+
+        )
+
+    return "```\n" + "\n".join(lines) + "\n```"
 
 def _safe_quantity(value):
     if value is None:
@@ -475,6 +521,8 @@ def process_request(data):
         total_broken = 0
         total_sold = 0
 
+        reply += format_report_table(records) + "\n\n"
+
         for record in records:
 
             birds = _safe_number(record.birds)
@@ -485,19 +533,6 @@ def process_request(data):
             broken = _safe_number(record.broken)
             sold = _safe_number(record.sold)
 
-            stock = produced - broken - sold
-
-            reply += (
-                f"🐔 Shed {record.shed_no}\n"
-                f"Birds      : {birds}\n"
-                f"Mortality  : {mortality}\n"
-                f"Feed       : {feed} kg\n"
-                f"Produced   : {produced}\n"
-                f"Broken     : {broken}\n"
-                f"Sold       : {sold}\n"
-                f"Stock      : {stock}\n\n"
-            )
-
             total_birds += birds
             total_mortality += mortality
             total_feed += feed
@@ -505,7 +540,6 @@ def process_request(data):
             total_produced += produced
             total_broken += broken
             total_sold += sold
-
         total_stock = total_produced - total_broken - total_sold
 
         reply += (
@@ -519,7 +553,20 @@ def process_request(data):
             f"Current Stock    : {total_stock}"
         )
 
-        return reply
+        available, used, remaining = get_medicine_totals_kg()
+
+        reply += (
+
+            "\n\n💊 Medicine Summary\n\n"
+
+            f"Available : {available} kg\n"
+
+            f"Used      : {used} kg\n"
+
+            f"Remaining : {remaining} kg"
+
+        )
+        return reply 
     
     elif intent == "get_remaining":
 
@@ -1457,4 +1504,218 @@ def process_request(data):
 
             f"📦 Stock\n"
             f"{summary1['stock']} → {summary2['stock']}"
+        )
+    
+    elif intent == "add_medicine":
+
+        shed = data["shed"]
+
+        medicine = data["medicine"]
+
+        quantity = data["quantity"]
+
+        unit = data["unit"]
+
+        return add_medicine(
+            shed,
+            medicine,
+            quantity,
+            unit
+        )
+
+    elif intent == "use_medicine":
+
+        shed = data["shed"]
+
+        medicine = data["medicine"]
+
+        quantity = data["quantity"]
+
+        return use_medicine(
+            shed,
+            medicine,
+            quantity
+        )
+
+    elif intent == "get_medicine":
+
+        shed = data["shed"]
+
+        medicine = data["medicine"]
+
+        record = get_medicine(
+            shed,
+            medicine
+        )
+
+        if record is None:
+
+            return (
+                f"{medicine} not found "
+                f"in Shed {shed}."
+            )
+
+        remaining = (
+            record["available"]
+            - record["used"]
+        )
+
+        return (
+            f"💊 {record["medicine_name"]}\n\n"
+
+            f"🐔 Shed : {shed}\n"
+
+            f"Available : {record["available"]} {record["unit"]}\n"
+
+            f"Used : {record["used"]} {record["unit"]}\n"
+
+            f"Remaining : {remaining} {record["unit"]}"
+    )
+
+    elif intent == "get_all_medicines":
+
+        shed = data["shed"]
+
+        medicines = get_all_medicines(shed)
+
+        if not medicines:
+
+            return (
+                f"No medicines found "
+                f"in Shed {shed}."
+            )
+
+        reply = (
+            f"💊 Medicines in Shed {shed}\n\n"
+        )
+
+        for medicine in medicines:
+
+            remaining = (
+                medicine.available
+                - medicine.used
+            )
+
+            reply += (
+                f"{medicine.medicine_name}\n"
+
+                f"Available : {medicine.available} {medicine.unit}\n"
+
+                f"Used : {medicine.used} {medicine.unit}\n"
+
+                f"Remaining : {remaining} {medicine.unit}\n\n"
+            )
+
+        return reply
+
+    elif intent == "get_medicine_remaining":
+
+        shed = data["shed"]
+        medicine = data.get("medicine")
+
+        if medicine is None:
+
+            medicines = get_all_medicines(shed)
+
+            if not medicines:
+                return f"No medicines found in Shed {shed}."
+
+            message = f"💊 Remaining Medicines - Shed {shed}\n\n"
+
+            for med in medicines:
+
+                remaining = med.available - med.used
+
+                message += (
+                    f"{med.medicine_name}\n"
+                    f"Remaining : {remaining} {med.unit}\n\n"
+                )
+
+            return message
+
+        record = get_medicine(shed, medicine)
+
+
+        record = get_medicine(
+            shed,
+            medicine
+        )
+
+        if record is None:
+
+            return (
+                f"{medicine} not found in Shed {shed}."
+            )
+
+        remaining = (
+            record.available
+            - record.used
+        )
+
+        return (
+            f"💊 {medicine}\n\n"
+            f"Remaining : {remaining} {record.unit}"
+        )
+
+    elif intent == "get_medicine_used":
+
+        shed = data.get("shed")
+        medicine = data.get("medicine")
+
+        # CASE 1: No medicine mentioned → show all medicines
+        if medicine is None:
+
+            medicines = get_all_medicines(shed)
+
+            if not medicines:
+
+                if shed is None:
+                    return "No medicines found."
+
+                return f"No medicines found in Shed {shed}."
+
+            title = (
+                f"💊 Medicine Usage - Shed {shed}"
+                if shed is not None
+                else "💊 Medicine Usage - All Sheds"
+            )
+
+            message = f"{title}\n\n"
+
+            current_shed = None
+
+            for med in medicines:
+
+                if shed is None:
+
+                    if current_shed != med.shed_no:
+
+                        current_shed = med.shed_no
+
+                        message += f"🐔 Shed {current_shed}\n"
+
+                message += (
+                    f"{med.medicine_name} : "
+                    f"{med.used} {med.unit}\n"
+                )
+
+            return message
+
+        # CASE 2: Particular medicine
+        record = get_medicine(
+            shed,
+            medicine
+        )
+
+        if record is None:
+
+            return (
+                f"{medicine} not found "
+                f"in Shed {shed}."
+            )
+
+        return (
+            f"💊 {record['medicine_name']}\n\n"
+            f"🐔 Shed : {shed}\n"
+            f"Used : {record['used']} {record['unit']}"
         )

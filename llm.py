@@ -1185,6 +1185,182 @@ def understand_message(message):
             "month2":"last_month"
         }}
 
+        User : 
+        Compare this month's production and last month
+
+        Ouptut:
+        {{
+            "intent":"compare_months",
+            "month1":"this_month",
+            "month2":"last_month",
+            "field":"produced"
+        }}
+
+        User:
+        Add 20 bottles Vitamin A in shed 1
+
+        Output:
+
+
+        {{
+            "intent":"add_medicine",
+            "shed":1,
+            "medicine":"Vitamin A",
+            "quantity":20,
+            "unit":"bottle"
+        }}
+
+        User:
+        Add 5 kg Calcium Powder in shed 3
+
+        Output:
+
+        {{
+            "intent":"add_medicine",
+            "shed":3,
+            "medicine":"Calcium Powder",
+            "quantity":5,
+            "unit":"kg"
+        }}
+
+
+        User:
+        Use 5 bottles Vitamin A in shed 1
+
+        Output:
+
+        {{
+            "intent":"use_medicine",
+            "shed":1,
+            "medicine":"Vitamin A",
+            "quantity":5
+        }}
+
+
+        User:
+        Used 10 ml Antibiotic in shed 4
+
+        Output:
+
+        {{
+            "intent":"use_medicine",
+            "shed":4,
+            "medicine":"Antibiotic",
+            "quantity":10
+        }}
+
+
+        User:
+        Vitamin A in shed 1
+
+        Output:
+
+        {{
+            "intent":"get_medicine",
+            "shed":1,
+            "medicine":"Vitamin A"
+        }}
+
+        User:
+        Show Vitamin A in shed 3
+
+        Output:
+
+        {{
+            "intent":"get_medicine",
+            "shed":3,
+            "medicine":"Vitamin A"
+        }}
+
+        User:
+        How much Vitamin A is remaining in shed 2?
+
+        Output:
+
+        {{
+            "intent":"get_medicine_remaining",
+            "shed":2,
+            "medicine":"Vitamin A"
+        }}
+
+        User:
+        How much Vitamin A has been used in shed 5?
+
+        Output:
+
+        {{
+            "intent":"get_medicine_used",
+            "shed":5,
+            "medicine":"Vitamin A"
+        }}
+
+        User:
+        Show medicines in shed 1
+
+        Output:
+
+        {{
+            "intent":"get_all_medicines",
+            "shed":1
+        }}
+
+        User:
+        Medicine report for shed 2
+
+        Output:
+
+        {{
+            "intent":"get_all_medicines",
+            "shed":2
+        }}
+
+        User:
+        List medicines in shed 4
+
+        Output:
+
+
+        {{
+            "intent":"get_all_medicines",
+            "shed":4
+        }}
+
+        User:
+        5 bottels vitamine A is used in shed 1
+
+        Output:
+        {{
+            "intent":"use_medicine",
+            "shed":1,
+            "medicine":"Vitamin A",
+            "quantity":5,
+            "unit":"bottle"
+        }}
+
+        User:
+        vitamin a in shed 1
+
+        Output:
+        {{
+            "intent":"get_medicine",
+            "shed":1,
+            "medicine":"Vitamin A"
+        }}
+
+        User:
+        vitamine A stock
+
+        Output:
+        {{
+            "intent":"get_medicine",
+            "shed":1,
+            "medicine":"Vitamin A"
+        }}
+
+
+
+        
+
         Now convert this:
 
         {message}
@@ -1198,3 +1374,268 @@ def understand_message(message):
 
     return json.loads(text)
 
+        # User:
+        # Add 500 kg Layer Feed to shed 1
+
+        # Output:
+        # {{
+        #     "intent":"add_feed",
+        #     "shed":1,
+        #     "feed":"Layer Feed",
+        #     "quantity":500,
+        #     "unit":"kg"
+        # }}
+
+        # User:
+        # 100 kg Corn added in shed 2
+
+        # Output:
+        # {{
+        #     "intent":"add_feed",
+        #     "shed":2,
+        #     "feed":"Corn",
+        #     "quantity":100,
+        #     "unit":"kg"
+        # }}
+
+        # User:
+        # 200 kg Grower Feed in shed 3 added
+
+        # Output:
+        # {{
+        #     "intent":"add_feed",
+        #     "shed":3,
+        #     "feed":"Grower Feed",
+        #     "quantity":200,
+        #     "unit":"kg"
+        # }}
+
+        # User:
+        # Use 25 kg Layer Feed in shed 1
+
+        # Output:
+        # {{
+        #     "intent":"use_feed",
+        #     "shed":1,
+        #     "feed":"Layer Feed",
+        #     "quantity":25,
+        #     "unit":"kg"
+        # }}
+
+        # User:
+        # 20 kg Corn is used in shed 2
+
+        # Output:
+        # {{
+        #     "intent":"use_feed",
+        #     "shed":2,
+        #     "feed":"Corn",
+        #     "quantity":20,
+        #     "unit":"kg"
+        # }}
+
+        # User:
+        # Use 15 kg Grower Feed in shed 3
+
+        # Output:
+        # {{
+        #     "intent":"use_feed",
+        #     "shed":3,
+        #     "feed":"Grower Feed",
+        #     "quantity":15,
+        #     "unit":"kg"
+        # }}
+
+        # User:
+        # Layer Feed in shed 1
+
+        # Output:
+        # {{
+        #     "intent":"get_feed",
+        #     "shed":1,
+        #     "feed":"Layer Feed"
+        # }}
+
+        # User:
+        # Corn in shed 2
+
+        # Output:
+        # {{
+        #     "intent":"get_feed",
+        #     "shed":2,
+        #     "feed":"Corn"
+        # }}
+
+        # User:
+        # Remaining Layer Feed in shed 1
+
+        # Output:
+        # {{
+        #     "intent":"get_feed_remaining",
+        #     "shed":1,
+        #     "feed":"Layer Feed"
+        # }}
+
+        # User:
+        # How much Layer Feed is remaining in shed 1
+
+        # Output:
+        # {{
+        #     "intent":"get_feed_remaining",
+        #     "shed":1,
+        #     "feed":"Layer Feed"
+        # }}
+
+        # User:
+        # Used Layer Feed in shed 1
+
+        # Output:
+        # {{
+        #     "intent":"get_feed_used",
+        #     "shed":1,
+        #     "feed":"Layer Feed"
+        # }}
+
+        # User:
+        # How much Layer Feed is used in shed 1
+
+        # Output:
+        # {{
+        #     "intent":"get_feed_used",
+        #     "shed":1,
+        #     "feed":"Layer Feed"
+        # }}
+
+        # User:
+        # Remaining feed in shed 1
+
+        # Output:
+        # {{
+        #     "intent":"get_feed_remaining",
+        #     "shed":1,
+        #     "feed":null
+        # }}
+
+        # User:
+        # Used feed in shed 1
+
+        # Output:
+        # {{
+        #     "intent":"get_feed_used",
+        #     "shed":1,
+        #     "feed":null
+        # }}
+
+        # User:
+        # Feed report in shed 1
+
+        # Output:
+        # {{
+        #     "intent":"get_feed",
+        #     "shed":1,
+        #     "feed":null
+        # }}
+
+        # User:
+        # Show all feed in shed 1
+
+        # Output:
+        # {{
+        #     "intent":"get_feed",
+        #     "shed":1,
+        #     "feed":null
+        # }}
+
+        # User:
+        # Today's feed
+
+        # Output:
+        # {{
+        #     "intent":"get_feed",
+        #     "shed":null,
+        #     "feed":null,
+        #     "date":"today"
+        # }}
+
+        # User:
+        # Today's remaining feed
+
+        # Output:
+        # {{
+        #     "intent":"get_feed_remaining",
+        #     "shed":null,
+        #     "feed":null,
+        #     "date":"today"
+        # }}
+
+        # User:
+        # Today's used feed
+
+        # Output:
+        # {{
+        #     "intent":"get_feed_used",
+        #     "shed":null,
+        #     "feed":null,
+        #     "date":"today"
+        # }}
+
+        # User:
+        # Feed report
+
+        # Output:
+        # {{
+        #     "intent":"get_feed",
+        #     "shed":null,
+        #     "feed":null
+        # }}
+
+        # User:
+        # Show all feed
+
+        # Output:
+        # {{
+        #     "intent":"get_feed",
+        #     "shed":null,
+        #     "feed":null
+        # }}
+
+        # User:
+        # Remaining feed
+
+        # Output:
+        # {{
+        #     "intent":"get_feed_remaining",
+        #     "shed":null,
+        #     "feed":null
+        # }}
+
+        # User:
+        # Used feed
+
+        # Output:
+        # {{
+        #     "intent":"get_feed_used",
+        #     "shed":null,
+        #     "feed":null
+        # }}
+
+        # User:
+        # How much Layer Feed was used today
+
+        # Output:
+        # {{
+        #     "intent":"get_feed_used",
+        #     "shed":null,
+        #     "feed":"Layer Feed",
+        #     "date":"today"
+        # }}
+
+        # User:
+        # How much Corn is remaining
+
+        # Output:
+        # {{
+        #     "intent":"get_feed_remaining",
+        #     "shed":null,
+        #     "feed":"Corn"
+        # }}
