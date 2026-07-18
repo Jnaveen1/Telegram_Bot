@@ -1478,6 +1478,18 @@ def understand_message(message):
         }}
 
 
+        The farm has only 9 sheds numbered 1 to 9.
+
+        If the user mentions any shed outside this range, do NOT generate a normal intent.
+
+        Instead return:
+
+        {{
+            "intent":"invalid_shed",
+            "shed":10,
+            "message":"Invalid shed number"
+        }}
+
         Now convert this:
 
         {message}

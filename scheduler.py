@@ -47,8 +47,8 @@ scheduler = BackgroundScheduler()
 scheduler.add_job(
     run_daily_reminder,
     trigger="cron",
-    hour=18,
-    minute=50
+    hour=12,
+    minute=13
 )
 
 scheduler.start()

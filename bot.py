@@ -24,7 +24,6 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         print("LLM Output:", data)
 
         reply = process_request(data)
-        print("RESPONSE:", repr(reply))
 
         language = data.get("language", "en")
 

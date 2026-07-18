@@ -39,8 +39,8 @@ from database import (
     get_feed,
     get_all_feeds,
     get_feed_totals_kg,
-
 )
+
 
 def format_report_table(records):
 
@@ -78,6 +78,149 @@ def format_report_table(records):
         )
 
     return "```\n" + "\n".join(lines) + "\n```"
+
+def format_summary_comparison_table(summary1, summary2, column1, column2):
+
+    table = [
+
+                [
+                    "Birds",
+                    summary1["birds"],
+                    summary2["birds"],
+                    f"{summary1['birds'] - summary2['birds']:+}"
+                ],
+
+                [
+                    "Live Birds",
+                    summary1["live_birds"],
+                    summary2["live_birds"],
+                    f"{summary1['live_birds'] - summary2['live_birds']:+}"
+                ],
+
+                [
+                    "Mortality",
+                    summary1["mortality"],
+                    summary2["mortality"],
+                    f"{summary1['mortality'] - summary2['mortality']:+}"
+                ],
+
+                [
+                    "Produced",
+                    summary1["produced"],
+                    summary2["produced"],
+                    f"{summary1['produced'] - summary2['produced']:+}"
+                ],
+
+                [
+                    "Broken",
+                    summary1["broken"],
+                    summary2["broken"],
+                    f"{summary1['broken'] - summary2['broken']:+}"
+                ],
+
+                [
+                    "Sold",
+                    summary1["sold"],
+                    summary2["sold"],
+                    f"{summary1['sold'] - summary2['sold']:+}"
+                ],
+
+                [
+                    "Stock",
+                    summary1["stock"],
+                    summary2["stock"],
+                    f"{summary1['stock'] - summary2['stock']:+}"
+                ],
+
+            ]
+
+    return (
+        "```"
+        + tabulate(
+            table,
+            headers=[
+                "Metric",
+                column1,
+                column2 , 
+                "Change"
+            ],
+            tablefmt="github"
+        )
+        + "```"
+    )
+
+def format_comparison_table(summary1, summary2, week1, week2):
+
+    table = [
+
+        ["Birds",
+         summary1["birds"],
+         summary2["birds"] ,
+         f"{summary1['birds'] - summary2['birds']:+}"
+         ],
+
+        [
+            "Live Birds",
+            summary1["live_birds"],
+            summary2["live_birds"],
+            f"{summary1['live_birds'] - summary2['live_birds']:+}"
+        ],
+
+        [
+            "Mortality",
+            summary1["mortality"],
+            summary2["mortality"],
+            f"{summary1['mortality'] - summary2['mortality']:+}"
+        ],
+
+        # ["Feed (kg)",
+        #  summary1["feed"],
+        #  summary2["feed"]],
+
+        [
+            "Produced",
+            summary1["produced"],
+            summary2["produced"],
+            f"{summary1['produced'] - summary2['produced']:+}"
+        ],
+
+        [
+            "Broken",
+            summary1["broken"],
+            summary2["broken"],
+            f"{summary1['broken'] - summary2['broken']:+}"
+        ],
+
+        [
+            "Sold",
+            summary1["sold"],
+            summary2["sold"],
+            f"{summary1['sold'] - summary2['sold']:+}"
+        ],
+
+        [
+            "Stock",
+            summary1["stock"],
+            summary2["stock"],
+            f"{summary1['stock'] - summary2['stock']:+}"
+        ],
+
+    ]
+
+    return (
+        "```"
+        + tabulate(
+            table,
+            headers=[
+                "Metric",
+                week1.replace("_", " ").title(),
+                week2.replace("_", " ").title(), 
+                "Change"
+            ],
+            tablefmt="github"
+        )
+        + "```"
+    )
 
 def _safe_quantity(value):
     if value is None:
@@ -317,8 +460,6 @@ def process_request(data):
     shed = data.get("shed")
     unit = data.get("unit", "egg")
 
-    # ---------------- ADD PRODUCTION ----------------
-
     if intent == "add_production":
         if shed is None and intent not in [
             "get_daily_summary",
@@ -355,8 +496,6 @@ def process_request(data):
             report_date = str(date.today() - timedelta(days=1))
         add_production(shed, quantity, report_date) 
         return f"✅ Added {quantity} produced eggs to Shed {shed}"
-
-    # ---------------- ADD BROKEN ----------------
 
     elif intent == "add_broken":
 
@@ -399,7 +538,6 @@ def process_request(data):
         )
 
         return f"✅ Recorded {quantity} broken eggs in Shed {shed}"
-    # ---------------- ADD SOLD ----------------
 
     elif intent == "add_sold":
 
@@ -472,7 +610,6 @@ def process_request(data):
             f"📦 Sold       : {record.sold}\n"
             f"📦 Stock      : {stock}"
         )
-    # ---------------- BROKEN ----------------
 
     elif intent == "get_broken":
 
@@ -488,8 +625,6 @@ def process_request(data):
 
         return f"Shed {shed} has {record.broken} broken eggs today."
 
-    # ---------------- SOLD ----------------
-
     elif intent == "get_sold":
 
         if shed is None:
@@ -503,8 +638,6 @@ def process_request(data):
             return f"No data found for Shed {shed} today."
 
         return f"Shed {shed} has {record.sold} sold eggs today."
-
-    # ---------------- PRODUCTION ----------------
 
     elif intent == "get_production":
 
@@ -529,8 +662,6 @@ def process_request(data):
             f"Shed {shed} produced "
             f"{format_quantity(record.produced, unit)} today."
         )
-
-    # ---------------- DAILY SUMMARY ----------------
 
     elif intent == "get_daily_summary":
 
@@ -828,21 +959,6 @@ def process_request(data):
             f"Stock : {format_quantity(stock, unit)}"
         )
     
-    # elif intent == "get_highest_feed":
-
-    #     report_date = get_report_date(data)
-
-    #     record = get_highest("feed", report_date)
-
-    #     if record is None:
-    #         return f"No data found for {report_date}."
-
-    #     return (
-    #         f"🏆 Highest Feed ({report_date})\n\n"
-    #         f"🐔 Shed {record.shed_no}\n"
-    #         f"🌾 Feed : {record.feed} kg"
-    #     )
-
     elif intent == "get_highest_mortality":
 
         report_date = get_report_date(data)
@@ -960,21 +1076,6 @@ def process_request(data):
             f"🐔 Shed {record.shed_no}\n"
             f"💀 Mortality : {_safe_number(record.mortality)} birds"
         )
-
-    # elif intent == "get_lowest_feed":
-
-    #     report_date = get_report_date(data)
-
-    #     record = get_lowest("feed", report_date)
-
-    #     if record is None:
-    #         return f"No data found for {report_date}."
-
-    #     return (
-    #         f"📉 Lowest Feed ({report_date})\n\n"
-    #         f"🐔 Shed {record.shed_no}\n"
-    #         f"🌾 Feed : {_safe_number(record.feed)} kg"
-    #     )
 
     elif intent == "get_lowest_birds":
 
@@ -1458,8 +1559,6 @@ def process_request(data):
             f"Used : {record.used} {record.unit}"
         )
 
-
-
     elif intent == "get_total_live_birds":
 
         report_date = get_report_date(data)
@@ -1548,33 +1647,50 @@ def process_request(data):
                 f"Difference: {difference:+}"
             )
 
+        # reply = (
+        #     f"📊 Date Comparison\n\n"
+        #     f"{date1}  ↔  {date2}\n\n"
+
+        #     f"🐔 Birds\n"
+        #     f"{summary1['birds']} → {summary2['birds']}\n\n"
+
+        #     f"🐥 Live Birds\n"
+        #     f"{summary1['live_birds']} → {summary2['live_birds']}\n\n"
+
+        #     f"💀 Mortality\n"
+        #     f"{summary1['mortality']} → {summary2['mortality']}\n\n"
+
+        #     f"🌾 Feed\n"
+        #     f"{summary1['feed']} kg → {summary2['feed']} kg\n\n"
+
+        #     f"🥚 Produced\n"
+        #     f"{summary1['produced']} → {summary2['produced']}\n\n"
+
+        #     f"❌ Broken\n"
+        #     f"{summary1['broken']} → {summary2['broken']}\n\n"
+
+        #     f"📦 Sold\n"
+        #     f"{summary1['sold']} → {summary2['sold']}\n\n"
+
+        #     f"📦 Stock\n"
+        #     f"{summary1['stock']} → {summary2['stock']}"
+        # )
+
         reply = (
-            f"📊 Date Comparison\n\n"
-            f"{date1}  ↔  {date2}\n\n"
+            "📊 Date Comparison\n\n"
+            f"{date1} ↔ {date2}\n\n"
+        )
 
-            f"🐔 Birds\n"
-            f"{summary1['birds']} → {summary2['birds']}\n\n"
+        reply += format_summary_comparison_table(
 
-            f"🐥 Live Birds\n"
-            f"{summary1['live_birds']} → {summary2['live_birds']}\n\n"
+            summary1,
 
-            f"💀 Mortality\n"
-            f"{summary1['mortality']} → {summary2['mortality']}\n\n"
+            summary2,
 
-            f"🌾 Feed\n"
-            f"{summary1['feed']} kg → {summary2['feed']} kg\n\n"
+            date1,
 
-            f"🥚 Produced\n"
-            f"{summary1['produced']} → {summary2['produced']}\n\n"
+            date2
 
-            f"❌ Broken\n"
-            f"{summary1['broken']} → {summary2['broken']}\n\n"
-
-            f"📦 Sold\n"
-            f"{summary1['sold']} → {summary2['sold']}\n\n"
-
-            f"📦 Stock\n"
-            f"{summary1['stock']} → {summary2['stock']}"
         )
 
         return reply
@@ -1620,36 +1736,23 @@ def process_request(data):
                 f"{week2} : {value2}{unit}\n\n"
                 f"{status}"
             )
+        
+        reply = (
+                "📊 Weekly Comparison\n\n"
+                f"{week1.replace('_',' ').title()} ↔ "
+                f"{week2.replace('_',' ').title()}\n\n"
+            )
 
-        return (
-            f"📊 Weekly Comparison\n\n"
-            f"{week1} ↔ {week2}\n\n"
+        reply += format_comparison_table(
+            summary1,
+            summary2,
+            week1,
+            week2
+            )
 
-            f"🐔 Birds\n"
-            f"{summary1['birds']} → {summary2['birds']}\n\n"
+        return reply
 
-            f"🐥 Live Birds\n"
-            f"{summary1['live_birds']} → {summary2['live_birds']}\n\n"
-
-            f"💀 Mortality\n"
-            f"{summary1['mortality']} → {summary2['mortality']}\n\n"
-
-            f"🌾 Feed\n"
-            f"{summary1['feed']} kg → {summary2['feed']} kg\n\n"
-
-            f"🥚 Produced\n"
-            f"{summary1['produced']} → {summary2['produced']}\n\n"
-
-            f"❌ Broken\n"
-            f"{summary1['broken']} → {summary2['broken']}\n\n"
-
-            f"📦 Sold\n"
-            f"{summary1['sold']} → {summary2['sold']}\n\n"
-
-            f"📦 Stock\n"
-            f"{summary1['stock']} → {summary2['stock']}"
-        )
-
+        
     elif intent == "compare_months":
 
         month1 = data["month1"]
@@ -1691,36 +1794,21 @@ def process_request(data):
                 f"{month2} : {value2}{unit}\n\n"
                 f"{status}"
             )
-
-        return (
-            f"📊 Monthly Comparison\n\n"
-
-            f"{month1} ↔ {month2}\n\n"
-
-            f"🐔 Birds\n"
-            f"{summary1['birds']} → {summary2['birds']}\n\n"
-
-            f"🐥 Live Birds\n"
-            f"{summary1['live_birds']} → {summary2['live_birds']}\n\n"
-
-            f"💀 Mortality\n"
-            f"{summary1['mortality']} → {summary2['mortality']}\n\n"
-
-            f"🌾 Feed\n"
-            f"{summary1['feed']} kg → {summary2['feed']} kg\n\n"
-
-            f"🥚 Produced\n"
-            f"{summary1['produced']} → {summary2['produced']}\n\n"
-
-            f"❌ Broken\n"
-            f"{summary1['broken']} → {summary2['broken']}\n\n"
-
-            f"📦 Sold\n"
-            f"{summary1['sold']} → {summary2['sold']}\n\n"
-
-            f"📦 Stock\n"
-            f"{summary1['stock']} → {summary2['stock']}"
+        
+        reply = (
+            "📊 Monthly Comparison\n\n"
+            f"{month1.replace('_', ' ').title()} ↔ "
+            f"{month2.replace('_', ' ').title()}\n\n"
         )
+        
+        reply += format_summary_comparison_table(
+            summary1,
+            summary2,
+            month1,
+            month2
+        )
+
+        return reply 
     
     elif intent == "add_medicine":
 
@@ -1934,4 +2022,10 @@ def process_request(data):
             f"💊 {record['medicine_name']}\n\n"
             f"🐔 Shed : {shed}\n"
             f"Used : {record['used']} {record['unit']}"
+        )
+    
+    elif intent == "invalid_shed":
+        return (
+            f"❌ Shed {data['shed']} does not exist.\n"
+            "Valid sheds are 1 to 9."
         )
