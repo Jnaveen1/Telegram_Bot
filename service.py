@@ -41,7 +41,6 @@ from database import (
     get_feed_totals_kg,
 )
 
-
 def format_report_table(records):
 
     lines = []
@@ -301,6 +300,37 @@ def format_quantity(eggs, unit):
 
     return f"{eggs} eggs"
 
+def format_period_table(date, birds, produced, broken, sold, mortality):
+
+    stock = produced - broken - sold
+
+    table = [[
+        birds,
+        produced,
+        broken,
+        sold,
+        stock,
+        mortality
+    ]]
+
+    return (
+        f"📅 {date}\n\n"
+        + "```"
+        + tabulate(
+            table,
+            headers=[
+                "Birds",
+                "Eggs",
+                "Broken",
+                "Sold",
+                "Stock",
+                "Mortality"
+            ],
+            tablefmt="plain"
+        )
+        + "```"
+    )
+
 def generate_period_summary(records, title):
 
     if not records:
@@ -310,7 +340,6 @@ def generate_period_summary(records, title):
 
     total_birds = 0
     total_mortality = 0
-    total_feed = 0
 
     total_produced = 0
     total_broken = 0
@@ -320,7 +349,6 @@ def generate_period_summary(records, title):
 
     day_birds = 0
     day_mortality = 0
-    day_feed = 0
 
     day_produced = 0
     day_broken = 0
@@ -332,25 +360,28 @@ def generate_period_summary(records, title):
 
             if current_date is not None:
 
-                stock = day_produced - day_broken - day_sold
+                reply += format_period_table(
 
-                reply += (
-                    f"Birds      : {day_birds}\n"
-                    f"Mortality  : {day_mortality}\n"
-                    f"Feed       : {day_feed} kg\n"
-                    f"Produced   : {day_produced}\n"
-                    f"Broken     : {day_broken}\n"
-                    f"Sold       : {day_sold}\n"
-                    f"Stock      : {stock}\n\n"
+                    current_date,
+
+                    day_birds,
+
+                    day_produced,
+
+                    day_broken,
+
+                    day_sold,
+
+                    day_mortality
+
                 )
+
+                reply += "\n\n"
 
             current_date = record.date
 
-            reply += f"📅 {current_date}\n"
-
             day_birds = 0
             day_mortality = 0
-            day_feed = 0
 
             day_produced = 0
             day_broken = 0
@@ -358,7 +389,6 @@ def generate_period_summary(records, title):
 
         birds = _safe_number(record.birds)
         mortality = _safe_number(record.mortality)
-        feed = _safe_number(record.feed)
 
         produced = _safe_number(record.produced)
         broken = _safe_number(record.broken)
@@ -366,7 +396,6 @@ def generate_period_summary(records, title):
 
         day_birds += birds
         day_mortality += mortality
-        day_feed += feed
 
         day_produced += produced
         day_broken += broken
@@ -374,65 +403,59 @@ def generate_period_summary(records, title):
 
         total_birds += birds
         total_mortality += mortality
-        total_feed += feed
 
         total_produced += produced
         total_broken += broken
         total_sold += sold
 
-    stock = day_produced - day_broken - day_sold
+    # Last day's table
+    reply += format_period_table(
 
-    reply += (
-        f"Birds      : {day_birds}\n"
-        f"Mortality  : {day_mortality}\n"
-        f"Feed       : {day_feed} kg\n"
-        f"Produced   : {day_produced}\n"
-        f"Broken     : {day_broken}\n"
-        f"Sold       : {day_sold}\n"
-        f"Stock      : {stock}\n\n"
+        current_date,
+
+        day_birds,
+
+        day_produced,
+
+        day_broken,
+
+        day_sold,
+
+        day_mortality
+
     )
 
+    reply += "\n\n"
+
     total_stock = total_produced - total_broken - total_sold
+
+    feed_available, feed_used, feed_remaining = get_feed_totals_kg()
 
     reply += (
         "--------------------------\n"
         f"Total Birds      : {total_birds}\n"
         f"Total Mortality  : {total_mortality}\n"
-        f"Total Feed       : {total_feed} kg\n\n"
+        f"Total Feed Used  : {feed_used} kg\n\n"
         f"Total Produced   : {total_produced}\n"
         f"Total Broken     : {total_broken}\n"
         f"Total Sold       : {total_sold}\n"
         f"Current Stock    : {total_stock}"
     )
 
-        # Current Medicine Summary
     med_available, med_used, med_remaining = get_medicine_totals_kg()
 
     reply += (
-
-        "\n\n💊Current Medicine Summary\n\n"
-
+        "\n\n💊 Current Medicine Summary\n\n"
         f"Available : {med_available} kg\n"
-
         f"Used      : {med_used} kg\n"
-
         f"Remaining : {med_remaining} kg"
-
     )
 
-    # Current Feed Summary
-    feed_available, feed_used, feed_remaining = get_feed_totals_kg()
-
     reply += (
-
-        "\n\n🌾Current Feed Summary\n\n"
-
+        "\n\n🌾 Current Feed Summary\n\n"
         f"Available : {feed_available} kg\n"
-
         f"Used      : {feed_used} kg\n"
-
         f"Remaining : {feed_remaining} kg"
-
     )
 
     return reply
@@ -1751,8 +1774,7 @@ def process_request(data):
             )
 
         return reply
-
-        
+   
     elif intent == "compare_months":
 
         month1 = data["month1"]
