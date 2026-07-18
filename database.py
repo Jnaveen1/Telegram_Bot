@@ -644,80 +644,80 @@ def get_total_mortality(report_date):
 
     return total or 0
 
-def add_feed(shed_no, quantity, report_date):
+# def add_feed(shed_no, quantity, report_date):
 
-    db = SessionLocal()
+#     db = SessionLocal()
 
-    try:
+#     try:
 
-        record = (
-            db.query(EggRecord)
-            .filter(
-                EggRecord.shed_no == shed_no,
-                EggRecord.date == report_date
-            )
-            .first()
-        )
+#         record = (
+#             db.query(EggRecord)
+#             .filter(
+#                 EggRecord.shed_no == shed_no,
+#                 EggRecord.date == report_date
+#             )
+#             .first()
+#         )
 
-        if record is None:
+#         if record is None:
 
-            record = EggRecord(
-                shed_no=shed_no,
-                date=report_date,
-                feed=quantity
-            )
+#             record = EggRecord(
+#                 shed_no=shed_no,
+#                 date=report_date,
+#                 feed=quantity
+#             )
 
-            db.add(record)
+#             db.add(record)
 
-        else:
+#         else:
 
-            record.feed = (record.feed or 0) + quantity
+#             record.feed = (record.feed or 0) + quantity
 
-        db.commit()
-        db.close()
+#         db.commit()
+#         db.close()
 
-        return f"✅ Added {quantity} kg feed to Shed {shed_no}"
+#         return f"✅ Added {quantity} kg feed to Shed {shed_no}"
 
-    except Exception as e:
+#     except Exception as e:
 
-        db.rollback()
-        db.close()
+#         db.rollback()
+#         db.close()
 
-        return str(e)
+#         return str(e)
 
-def get_feed(shed_no, report_date):
+# def get_feed(shed_no, report_date):
 
-    db = SessionLocal()
+#     db = SessionLocal()
 
-    record = (
-        db.query(EggRecord)
-        .filter(
-            EggRecord.shed_no == shed_no,
-            EggRecord.date == report_date
-        )
-        .first()
-    )
+#     record = (
+#         db.query(EggRecord)
+#         .filter(
+#             EggRecord.shed_no == shed_no,
+#             EggRecord.date == report_date
+#         )
+#         .first()
+#     )
 
-    db.close()
+#     db.close()
 
-    if record is None:
-        return 0
+#     if record is None:
+#         return 0
 
-    return record.feed or 0 
+#     return record.feed or 0 
 
-def get_total_feed(report_date):
+# def get_total_feed(report_date):
 
-    db = SessionLocal()
+#     db = SessionLocal()
 
-    total = (
-        db.query(func.sum(EggRecord.feed))
-        .filter(EggRecord.date == report_date)
-        .scalar()
-    )
+#     total = (
+#         db.query(func.sum(EggRecord.feed))
+#         .filter(EggRecord.date == report_date)
+#         .scalar()
+#     )
 
-    db.close()
+#     db.close()
 
-    return total or 0
+#     return total or 0
 
 def get_missing_sheds(report_date):
 
@@ -1162,6 +1162,208 @@ def get_medicine_totals_kg():
         round(total_remaining, 2)
     )
 
+def find_feed(db, shed_no, feed_name):
+
+    feeds = (
+        db.query(FeedStock)
+        .filter(
+            FeedStock.shed_no == shed_no
+        )
+        .all()
+    )
+
+    names = [f.feed_name for f in feeds]
+
+    match = get_close_matches(
+        feed_name,
+        names,
+        n=1,
+        cutoff=0.6
+    )
+
+    if not match:
+        return None
+
+    return (
+        db.query(FeedStock)
+        .filter(
+            FeedStock.shed_no == shed_no,
+            FeedStock.feed_name == match[0]
+        )
+        .first()
+    )
+
+def add_feed_stock(date, shed_no, feed_name, quantity, unit):
+
+    db = SessionLocal()
+
+    try:
+
+        feed = (
+            db.query(FeedStock)
+            .filter(
+                FeedStock.shed_no == shed_no,
+                func.lower(FeedStock.feed_name) == feed_name.lower()
+            )
+            .first()
+        )
+
+        if feed:
+
+            feed.available += quantity
+
+        else:
+
+            feed = FeedStock(
+
+                date=date,
+
+                shed_no=shed_no,
+
+                feed_name=feed_name,
+
+                available=quantity,
+
+                used=0,
+
+                unit=unit
+
+            )
+
+            db.add(feed)
+
+        db.commit()
+
+        db.close()
+
+        return (
+            f"✅ Added {quantity} {unit} "
+            f"of {feed_name} to Shed {shed_no}"
+        )
+
+    except Exception as e:
+
+        db.rollback()
+
+        db.close()
+
+        return str(e)
+    
+def use_feed(shed_no, feed_name, quantity):
+
+    db = SessionLocal()
+
+    try:
+
+        feed = find_feed(
+            db,
+            shed_no,
+            feed_name
+        )
+
+        if feed is None:
+
+            db.close()
+
+            return (
+                f"{feed_name} not found "
+                f"in Shed {shed_no}."
+            )
+
+        remaining = (
+            feed.available
+            - feed.used
+        )
+
+        if quantity > remaining:
+
+            db.close()
+
+            return (
+                f"Only {remaining} {feed.unit} "
+                f"remaining."
+            )
+
+        feed.used += quantity
+
+        db.commit()
+
+        db.close()
+
+        return (
+            f"✅ Used {quantity} {feed.unit} "
+            f"of {feed.feed_name}"
+        )
+
+    except Exception as e:
+
+        db.rollback()
+
+        db.close()
+
+        return str(e)    
+
+def get_feed(shed_no, feed_name):
+
+    db = SessionLocal()
+
+    feed = find_feed(
+        db,
+        shed_no,
+        feed_name
+    )
+
+    db.close()
+
+    return feed
+
+def get_all_feeds(shed_no=None):
+
+    db = SessionLocal()
+
+    query = db.query(FeedStock)
+
+    if shed_no is not None:
+
+        query = query.filter(
+            FeedStock.shed_no == shed_no
+        )
+
+    feeds = query.order_by(
+        FeedStock.shed_no,
+        FeedStock.feed_name
+    ).all()
+
+    db.close()
+
+    return feeds
+
+def get_feed_totals_kg():
+
+    db = SessionLocal()
+
+    feeds = db.query(FeedStock).all()
+
+    db.close()
+
+    total_available = 0
+    total_used = 0
+
+    for feed in feeds:
+
+        total_available += feed.available
+        total_used += feed.used
+
+    total_remaining = (
+        total_available
+        - total_used
+    )
+
+    return (
+        round(total_available, 2),
+        round(total_used, 2),
+        round(total_remaining, 2)
+    )
 
 # def get_daily_summary(report_date):
 

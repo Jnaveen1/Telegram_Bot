@@ -48,7 +48,7 @@ scheduler.add_job(
     run_daily_reminder,
     trigger="cron",
     hour=18,
-    minute=00
+    minute=50
 )
 
 scheduler.start()

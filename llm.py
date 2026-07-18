@@ -123,12 +123,14 @@ def understand_message(message):
         - add_mortality
         - get_mortality
         - get_total_mortality
-        - add_feed
-        - get_feed
-        - get_total_feed
         - get_total_live_birds
         - get_missing_sheds
         - get_missing_fields
+        - add_feed
+        - use_feed
+        - get_feed
+        - get_feed_remaining
+        - get_feed_used
 
         Return ONLY JSON.
 
@@ -936,57 +938,6 @@ def understand_message(message):
             "language":"en"
         }}
 
-        User:
-        Add 500 kg feed to shed 1
-
-        JSON:
-        {{
-            "intent":"add_feed",
-            "shed":1,
-            "quantity":500,
-            "date":"today",
-            "language":"en",
-            "unit":"kg"
-        }}
-
-        User:
-        Shed 2 consumed 450 kg feed
-
-        JSON:
-        {{
-            "intent":"add_feed",
-            "shed":2,
-            "quantity":450,
-            "date":"today",
-            "language":"en",
-            "unit":"kg"
-        }}
-
-        User:
-        Feed in shed 1
-
-        JSON:
-        {{
-            "intent":"get_feed",
-            "shed":1,
-            "quantity":null,
-            "date":"today",
-            "language":"en",
-            "unit":"kg"
-        }}
-
-        User:
-        Today's feed
-
-        JSON:
-        {{
-            "intent":"get_total_feed",
-            "shed":null,
-            "quantity":null,
-            "date":"today",
-            "language":"en",
-            "unit":"kg"
-        }}
 
         User:
         Today's live birds
@@ -1358,8 +1309,174 @@ def understand_message(message):
         }}
 
 
+        User:
+        Add 1000 kg Layer Feed to shed 1
 
-        
+        JSON:
+        {{
+            "intent":"add_feed",
+            "shed":1,
+            "feed":"Layer Feed",
+            "quantity":1000,
+            "date":"today",
+            "language":"en",
+            "unit":"kg"
+        }}
+
+        User:
+        Add 500 kg Starter Feed to shed 2
+
+        JSON:
+        {{
+            "intent":"add_feed",
+            "shed":2,
+            "feed":"Starter Feed",
+            "quantity":500,
+            "date":"today",
+            "language":"en",
+            "unit":"kg"
+        }}
+
+        User:
+        Use 200 kg Layer Feed in shed 1
+
+        JSON:
+        {{
+            "intent":"use_feed",
+            "shed":1,
+            "feed":"Layer Feed",
+            "quantity":200,
+            "date":"today",
+            "language":"en",
+            "unit":"kg"
+        }}
+
+        User:
+        Use 50 kg Starter Feed in shed 2
+
+        JSON:
+        {{
+            "intent":"use_feed",
+            "shed":2,
+            "feed":"Starter Feed",
+            "quantity":50,
+            "date":"today",
+            "language":"en",
+            "unit":"kg"
+        }}
+
+        User:
+        Layer Feed in shed 1
+
+        JSON:
+        {{
+            "intent":"get_feed",
+            "shed":1,
+            "feed":"Layer Feed",
+            "quantity":null,
+            "date":"today",
+            "language":"en",
+            "unit":"kg"
+        }}
+
+        User:
+        Starter Feed in shed 2
+
+        JSON:
+        {{
+            "intent":"get_feed",
+            "shed":2,
+            "feed":"Starter Feed",
+            "quantity":null,
+            "date":"today",
+            "language":"en",
+            "unit":"kg"
+        }}
+
+        User:
+        Remaining feed in shed 1
+
+        JSON:
+        {{
+            "intent":"get_feed_remaining",
+            "shed":1,
+            "feed":null,
+            "quantity":null,
+            "date":"today",
+            "language":"en",
+            "unit":"kg"
+        }}
+
+        User:
+        Remaining Layer Feed in shed 1
+
+        JSON:
+        {{
+            "intent":"get_feed_remaining",
+            "shed":1,
+            "feed":"Layer Feed",
+            "quantity":null,
+            "date":"today",
+            "language":"en",
+            "unit":"kg"
+        }}
+
+        User:
+        Remaining feed
+
+        JSON:
+        {{
+            "intent":"get_feed_remaining",
+            "shed":null,
+            "feed":null,
+            "quantity":null,
+            "date":"today",
+            "language":"en",
+            "unit":"kg"
+        }}
+
+        User:
+        Used feed in shed 1
+
+        JSON:
+        {{
+            "intent":"get_feed_used",
+            "shed":1,
+            "feed":null,
+            "quantity":null,
+            "date":"today",
+            "language":"en",
+            "unit":"kg"
+        }}
+
+        User:
+        How much Layer Feed is used in shed 1
+
+        JSON:
+        {{
+            "intent":"get_feed_used",
+            "shed":1,
+            "feed":"Layer Feed",
+            "quantity":null,
+            "date":"today",
+            "language":"en",
+            "unit":"kg"
+        }}
+
+        User:
+        Used feed
+
+        JSON:
+        {{
+            "intent":"get_feed_used",
+            "shed":null,
+            "feed":null,
+            "quantity":null,
+            "date":"today",
+            "language":"en",
+            "unit":"kg"
+        }}
+
 
         Now convert this:
 
@@ -1373,269 +1490,3 @@ def understand_message(message):
     text = text.replace("```json", "").replace("```", "").strip()
 
     return json.loads(text)
-
-        # User:
-        # Add 500 kg Layer Feed to shed 1
-
-        # Output:
-        # {{
-        #     "intent":"add_feed",
-        #     "shed":1,
-        #     "feed":"Layer Feed",
-        #     "quantity":500,
-        #     "unit":"kg"
-        # }}
-
-        # User:
-        # 100 kg Corn added in shed 2
-
-        # Output:
-        # {{
-        #     "intent":"add_feed",
-        #     "shed":2,
-        #     "feed":"Corn",
-        #     "quantity":100,
-        #     "unit":"kg"
-        # }}
-
-        # User:
-        # 200 kg Grower Feed in shed 3 added
-
-        # Output:
-        # {{
-        #     "intent":"add_feed",
-        #     "shed":3,
-        #     "feed":"Grower Feed",
-        #     "quantity":200,
-        #     "unit":"kg"
-        # }}
-
-        # User:
-        # Use 25 kg Layer Feed in shed 1
-
-        # Output:
-        # {{
-        #     "intent":"use_feed",
-        #     "shed":1,
-        #     "feed":"Layer Feed",
-        #     "quantity":25,
-        #     "unit":"kg"
-        # }}
-
-        # User:
-        # 20 kg Corn is used in shed 2
-
-        # Output:
-        # {{
-        #     "intent":"use_feed",
-        #     "shed":2,
-        #     "feed":"Corn",
-        #     "quantity":20,
-        #     "unit":"kg"
-        # }}
-
-        # User:
-        # Use 15 kg Grower Feed in shed 3
-
-        # Output:
-        # {{
-        #     "intent":"use_feed",
-        #     "shed":3,
-        #     "feed":"Grower Feed",
-        #     "quantity":15,
-        #     "unit":"kg"
-        # }}
-
-        # User:
-        # Layer Feed in shed 1
-
-        # Output:
-        # {{
-        #     "intent":"get_feed",
-        #     "shed":1,
-        #     "feed":"Layer Feed"
-        # }}
-
-        # User:
-        # Corn in shed 2
-
-        # Output:
-        # {{
-        #     "intent":"get_feed",
-        #     "shed":2,
-        #     "feed":"Corn"
-        # }}
-
-        # User:
-        # Remaining Layer Feed in shed 1
-
-        # Output:
-        # {{
-        #     "intent":"get_feed_remaining",
-        #     "shed":1,
-        #     "feed":"Layer Feed"
-        # }}
-
-        # User:
-        # How much Layer Feed is remaining in shed 1
-
-        # Output:
-        # {{
-        #     "intent":"get_feed_remaining",
-        #     "shed":1,
-        #     "feed":"Layer Feed"
-        # }}
-
-        # User:
-        # Used Layer Feed in shed 1
-
-        # Output:
-        # {{
-        #     "intent":"get_feed_used",
-        #     "shed":1,
-        #     "feed":"Layer Feed"
-        # }}
-
-        # User:
-        # How much Layer Feed is used in shed 1
-
-        # Output:
-        # {{
-        #     "intent":"get_feed_used",
-        #     "shed":1,
-        #     "feed":"Layer Feed"
-        # }}
-
-        # User:
-        # Remaining feed in shed 1
-
-        # Output:
-        # {{
-        #     "intent":"get_feed_remaining",
-        #     "shed":1,
-        #     "feed":null
-        # }}
-
-        # User:
-        # Used feed in shed 1
-
-        # Output:
-        # {{
-        #     "intent":"get_feed_used",
-        #     "shed":1,
-        #     "feed":null
-        # }}
-
-        # User:
-        # Feed report in shed 1
-
-        # Output:
-        # {{
-        #     "intent":"get_feed",
-        #     "shed":1,
-        #     "feed":null
-        # }}
-
-        # User:
-        # Show all feed in shed 1
-
-        # Output:
-        # {{
-        #     "intent":"get_feed",
-        #     "shed":1,
-        #     "feed":null
-        # }}
-
-        # User:
-        # Today's feed
-
-        # Output:
-        # {{
-        #     "intent":"get_feed",
-        #     "shed":null,
-        #     "feed":null,
-        #     "date":"today"
-        # }}
-
-        # User:
-        # Today's remaining feed
-
-        # Output:
-        # {{
-        #     "intent":"get_feed_remaining",
-        #     "shed":null,
-        #     "feed":null,
-        #     "date":"today"
-        # }}
-
-        # User:
-        # Today's used feed
-
-        # Output:
-        # {{
-        #     "intent":"get_feed_used",
-        #     "shed":null,
-        #     "feed":null,
-        #     "date":"today"
-        # }}
-
-        # User:
-        # Feed report
-
-        # Output:
-        # {{
-        #     "intent":"get_feed",
-        #     "shed":null,
-        #     "feed":null
-        # }}
-
-        # User:
-        # Show all feed
-
-        # Output:
-        # {{
-        #     "intent":"get_feed",
-        #     "shed":null,
-        #     "feed":null
-        # }}
-
-        # User:
-        # Remaining feed
-
-        # Output:
-        # {{
-        #     "intent":"get_feed_remaining",
-        #     "shed":null,
-        #     "feed":null
-        # }}
-
-        # User:
-        # Used feed
-
-        # Output:
-        # {{
-        #     "intent":"get_feed_used",
-        #     "shed":null,
-        #     "feed":null
-        # }}
-
-        # User:
-        # How much Layer Feed was used today
-
-        # Output:
-        # {{
-        #     "intent":"get_feed_used",
-        #     "shed":null,
-        #     "feed":"Layer Feed",
-        #     "date":"today"
-        # }}
-
-        # User:
-        # How much Corn is remaining
-
-        # Output:
-        # {{
-        #     "intent":"get_feed_remaining",
-        #     "shed":null,
-        #     "feed":"Corn"
-        # }}

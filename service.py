@@ -22,9 +22,6 @@ from database import (
     add_mortality,
     get_mortality,
     get_total_mortality , 
-    add_feed,
-    get_feed,
-    get_total_feed ,
     get_total_live_birds , 
     get_missing_sheds,
     get_missing_fields , 
@@ -36,9 +33,12 @@ from database import (
     use_medicine,
     get_medicine,
     get_all_medicines, 
-    add_feed,
+    get_medicine_totals_kg ,
+    add_feed_stock,
+    use_feed,
     get_feed,
-    get_medicine_totals_kg
+    get_all_feeds,
+    get_feed_totals_kg,
 
 )
 
@@ -262,6 +262,36 @@ def generate_period_summary(records, title):
         f"Current Stock    : {total_stock}"
     )
 
+        # Current Medicine Summary
+    med_available, med_used, med_remaining = get_medicine_totals_kg()
+
+    reply += (
+
+        "\n\n💊Current Medicine Summary\n\n"
+
+        f"Available : {med_available} kg\n"
+
+        f"Used      : {med_used} kg\n"
+
+        f"Remaining : {med_remaining} kg"
+
+    )
+
+    # Current Feed Summary
+    feed_available, feed_used, feed_remaining = get_feed_totals_kg()
+
+    reply += (
+
+        "\n\n🌾Current Feed Summary\n\n"
+
+        f"Available : {feed_available} kg\n"
+
+        f"Used      : {feed_used} kg\n"
+
+        f"Remaining : {feed_remaining} kg"
+
+    )
+
     return reply
 
 def get_records_for_period(data):
@@ -436,7 +466,7 @@ def process_request(data):
             f"📊 Shed {shed} Summary ({report_date})\n\n"
             f"🐔 Birds       : {record.birds}\n"
             f"💀 Mortality  : {record.mortality}\n"
-            f"🌾 Feed       : {record.feed} kg\n\n"
+            # f"🌾 Feed       : {record.feed} kg\n\n"
             f"🥚 Produced   : {record.produced}\n"
             f"❌ Broken     : {record.broken}\n"
             f"📦 Sold       : {record.sold}\n"
@@ -557,7 +587,7 @@ def process_request(data):
 
         reply += (
 
-            "\n\n💊 Medicine Summary\n\n"
+            "\n\n💊Current Medicine Summary\n\n"
 
             f"Available : {available} kg\n"
 
@@ -566,6 +596,21 @@ def process_request(data):
             f"Remaining : {remaining} kg"
 
         )
+
+        available, used, remaining = get_feed_totals_kg()
+
+        reply += (
+
+            "\n\n🌾Current Feed Summary\n\n"
+
+            f"Available : {available} kg\n"
+
+            f"Used      : {used} kg\n"
+
+            f"Remaining : {remaining} kg"
+
+        )
+
         return reply 
     
     elif intent == "get_remaining":
@@ -783,20 +828,20 @@ def process_request(data):
             f"Stock : {format_quantity(stock, unit)}"
         )
     
-    elif intent == "get_highest_feed":
+    # elif intent == "get_highest_feed":
 
-        report_date = get_report_date(data)
+    #     report_date = get_report_date(data)
 
-        record = get_highest("feed", report_date)
+    #     record = get_highest("feed", report_date)
 
-        if record is None:
-            return f"No data found for {report_date}."
+    #     if record is None:
+    #         return f"No data found for {report_date}."
 
-        return (
-            f"🏆 Highest Feed ({report_date})\n\n"
-            f"🐔 Shed {record.shed_no}\n"
-            f"🌾 Feed : {record.feed} kg"
-        )
+    #     return (
+    #         f"🏆 Highest Feed ({report_date})\n\n"
+    #         f"🐔 Shed {record.shed_no}\n"
+    #         f"🌾 Feed : {record.feed} kg"
+    #     )
 
     elif intent == "get_highest_mortality":
 
@@ -916,20 +961,20 @@ def process_request(data):
             f"💀 Mortality : {_safe_number(record.mortality)} birds"
         )
 
-    elif intent == "get_lowest_feed":
+    # elif intent == "get_lowest_feed":
 
-        report_date = get_report_date(data)
+    #     report_date = get_report_date(data)
 
-        record = get_lowest("feed", report_date)
+    #     record = get_lowest("feed", report_date)
 
-        if record is None:
-            return f"No data found for {report_date}."
+    #     if record is None:
+    #         return f"No data found for {report_date}."
 
-        return (
-            f"📉 Lowest Feed ({report_date})\n\n"
-            f"🐔 Shed {record.shed_no}\n"
-            f"🌾 Feed : {_safe_number(record.feed)} kg"
-        )
+    #     return (
+    #         f"📉 Lowest Feed ({report_date})\n\n"
+    #         f"🐔 Shed {record.shed_no}\n"
+    #         f"🌾 Feed : {_safe_number(record.feed)} kg"
+    #     )
 
     elif intent == "get_lowest_birds":
 
@@ -1196,54 +1241,225 @@ def process_request(data):
     elif intent == "add_feed":
 
         shed = data["shed"]
+
+        feed = data["feed"]
+
         quantity = data["quantity"]
 
-        if quantity < 0:
-            return (
-                "❌ Quantity cannot be negative.\n"
-                "Please enter a positive value."
-            )
+        unit = data.get("unit", "kg")
 
         report_date = get_report_date(data)
-        
-        result = add_feed(
-            shed,
-            quantity,
-            report_date
-        )
 
-        return result
-    
-    elif intent == "get_feed":
+        return add_feed_stock(
+
+            report_date,
+
+            shed,
+
+            feed,
+
+            quantity,
+
+            unit
+
+    )
+  
+    elif intent == "use_feed":
 
         shed = data["shed"]
 
-        report_date = get_report_date(data)
+        feed = data["feed"]
 
-        feed = get_feed(
+        quantity = data["quantity"]
+
+        return use_feed(
+
             shed,
-            report_date
+
+            feed,
+
+            quantity
+
         )
+
+    elif intent == "get_feed":
+
+        shed = data.get("shed")
+
+        feed = data.get("feed")
+
+        # No feed specified → show all feeds
+        if feed is None:
+
+            feeds = get_all_feeds(shed)
+
+            if not feeds:
+
+                if shed is None:
+                    return "No feed found."
+
+                return f"No feed found in Shed {shed}."
+
+            title = (
+                f"🌾 Feed Summary - Shed {shed}"
+                if shed is not None
+                else "🌾 Feed Summary - All Sheds"
+            )
+
+            reply = title + "\n\n"
+
+            current_shed = None
+
+            for item in feeds:
+
+                if shed is None and current_shed != item.shed_no:
+
+                    current_shed = item.shed_no
+
+                    reply += f"🐔 Shed {current_shed}\n"
+
+                remaining = item.available - item.used
+
+                reply += (
+                    f"{item.feed_name}\n"
+                    f"Available : {item.available} {item.unit}\n"
+                    f"Used      : {item.used} {item.unit}\n"
+                    f"Remaining : {remaining} {item.unit}\n\n"
+                )
+
+            return reply
+
+        # Single feed
+        record = get_feed(shed, feed)
+
+        if record is None:
+
+            return f"{feed} not found in Shed {shed}."
+
+        remaining = record.available - record.used
 
         return (
-            f"🌾 Feed Consumption ({report_date})\n\n"
-            f"Shed {shed} : {feed} kg"
+            f"🌾 {record.feed_name}\n\n"
+            f"🐔 Shed : {shed}\n"
+            f"Available : {record.available} {record.unit}\n"
+            f"Used : {record.used} {record.unit}\n"
+            f"Remaining : {remaining} {record.unit}"
         )
-    
-    elif intent == "get_total_feed":
 
-        records, title = get_records_for_period(data)
+    elif intent == "get_feed_remaining":
 
-        total = sum(
-            _safe_number(record.feed)
-            for record in records
-        )
+        shed = data.get("shed")
+
+        feed = data.get("feed")
+
+        # Show all feeds
+        if feed is None:
+
+            feeds = get_all_feeds(shed)
+
+            if not feeds:
+
+                if shed is None:
+                    return "No feed found."
+
+                return f"No feed found in Shed {shed}."
+
+            title = (
+                f"🌾 Remaining Feed - Shed {shed}"
+                if shed is not None
+                else "🌾 Remaining Feed - All Sheds"
+            )
+
+            reply = title + "\n\n"
+
+            current_shed = None
+
+            for item in feeds:
+
+                if shed is None and current_shed != item.shed_no:
+
+                    current_shed = item.shed_no
+
+                    reply += f"🐔 Shed {current_shed}\n"
+
+                remaining = item.available - item.used
+
+                reply += (
+                    f"{item.feed_name}\n"
+                    f"Remaining : {remaining} {item.unit}\n\n"
+                )
+
+            return reply
+
+        # Single feed
+        record = get_feed(shed, feed)
+
+        if record is None:
+
+            return f"{feed} not found in Shed {shed}."
+
+        remaining = record.available - record.used
 
         return (
-            f"🌾 Total Feed ({title})\n\n"
-            f"{total} kg"
+            f"🌾 {record.feed_name}\n\n"
+            f"Remaining : {remaining} {record.unit}"
         )
-    
+
+    elif intent == "get_feed_used":
+
+        shed = data.get("shed")
+
+        feed = data.get("feed")
+
+        if feed is None:
+
+            feeds = get_all_feeds(shed)
+
+            if not feeds:
+
+                if shed is None:
+                    return "No feed found."
+
+                return f"No feed found in Shed {shed}."
+
+            title = (
+                f"🌾 Feed Usage - Shed {shed}"
+                if shed is not None
+                else "🌾 Feed Usage - All Sheds"
+            )
+
+            reply = title + "\n\n"
+
+            current_shed = None
+
+            for item in feeds:
+
+                if shed is None and current_shed != item.shed_no:
+
+                    current_shed = item.shed_no
+
+                    reply += f"🐔 Shed {current_shed}\n"
+
+                reply += (
+                    f"{item.feed_name}\n"
+                    f"Used : {item.used} {item.unit}\n\n"
+                )
+
+            return reply
+
+        record = get_feed(shed, feed)
+
+        if record is None:
+
+            return f"{feed} not found in Shed {shed}."
+
+        return (
+            f"🌾 {record.feed_name}\n\n"
+            f"Used : {record.used} {record.unit}"
+        )
+
+
+
     elif intent == "get_total_live_birds":
 
         report_date = get_report_date(data)
