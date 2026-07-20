@@ -699,7 +699,7 @@ def process_request(data):
 
         total_birds = 0
         total_mortality = 0
-        total_feed = 0
+        # total_feed = 0
 
         total_produced = 0
         total_broken = 0
@@ -711,7 +711,7 @@ def process_request(data):
 
             birds = _safe_number(record.birds)
             mortality = _safe_number(record.mortality)
-            feed = _safe_number(record.feed)
+            # feed = _safe_number(record.feed)
 
             produced = _safe_number(record.produced)
             broken = _safe_number(record.broken)
@@ -719,7 +719,7 @@ def process_request(data):
 
             total_birds += birds
             total_mortality += mortality
-            total_feed += feed
+            # total_feed += feed
 
             total_produced += produced
             total_broken += broken
@@ -730,7 +730,7 @@ def process_request(data):
             "--------------------------\n"
             f"Total Birds      : {total_birds}\n"
             f"Total Mortality  : {total_mortality}\n"
-            f"Total Feed       : {total_feed} kg\n\n"
+            # f"Total Feed       : {total_feed} kg\n\n"
             f"Total Produced   : {total_produced}\n"
             f"Total Broken     : {total_broken}\n"
             f"Total Sold       : {total_sold}\n"
@@ -1396,7 +1396,11 @@ def process_request(data):
 
         quantity = data["quantity"]
 
+        report_date = get_report_date(data)
+
         return use_feed(
+
+            report_date , 
 
             shed,
 
@@ -1412,10 +1416,12 @@ def process_request(data):
 
         feed = data.get("feed")
 
+        report_date = get_report_date(data)
+        print("data", report_date)
         # No feed specified → show all feeds
         if feed is None:
 
-            feeds = get_all_feeds(shed)
+            feeds = get_all_feeds(report_date, shed)
 
             if not feeds:
 
@@ -1454,7 +1460,7 @@ def process_request(data):
             return reply
 
         # Single feed
-        record = get_feed(shed, feed)
+        record = get_feed(report_date ,shed, feed)
 
         if record is None:
 
