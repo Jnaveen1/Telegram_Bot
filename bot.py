@@ -5,6 +5,7 @@ from telegram.ext import (
     ContextTypes,
     filters
 )
+import traceback
 
 from config import TELEGRAM_BOT_TOKEN
 from llm import understand_message, translate_response 
@@ -39,6 +40,9 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(
             f"Error: {e}"
         )
+    # except Exception as e:
+    #     traceback.print_exc()
+    #     return f"Error: {e}"
 
 
 def start_bot():

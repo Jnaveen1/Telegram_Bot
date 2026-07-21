@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String , Float
+from sqlalchemy import Column, Integer, String, Float
 from base import Base
 
 
@@ -8,15 +8,14 @@ class EggRecord(Base):
 
     id = Column(Integer, primary_key=True)
 
-    date = Column(String)
+    date = Column(String(20))
     shed_no = Column(Integer)
     birds = Column(Integer, nullable=True)
     mortality = Column(Integer, nullable=True)
-    feed = Column(Float, nullable=True)
-
     produced = Column(Integer, nullable=True)
     broken = Column(Integer, nullable=True)
     sold = Column(Integer, nullable=True)
+
 
 class MedicineStock(Base):
 
@@ -25,14 +24,11 @@ class MedicineStock(Base):
     id = Column(Integer, primary_key=True)
 
     shed_no = Column(Integer, nullable=False)
-
-    medicine_name = Column(String, nullable=False)
-
+    medicine_name = Column(String(100), nullable=False)
     available = Column(Float, default=0)
-
     used = Column(Float, default=0)
+    unit = Column(String(20), default="ml")
 
-    unit = Column(String, default="ml")
 
 class FeedStock(Base):
 
@@ -40,14 +36,9 @@ class FeedStock(Base):
 
     id = Column(Integer, primary_key=True)
 
-    date = Column(String, nullable=False)
-
+    date = Column(String(20), nullable=False)
     shed_no = Column(Integer, nullable=False)
-
-    feed_name = Column(String, nullable=False)
-
+    feed_name = Column(String(100), nullable=False)
     available = Column(Float, default=0)
-
     used = Column(Float, default=0)
-
-    unit = Column(String, default="kg")
+    unit = Column(String(20), default="kg")

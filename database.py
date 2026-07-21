@@ -5,7 +5,7 @@ from datetime import date , timedelta
 from models import EggRecord , MedicineStock, FeedStock
 from difflib import get_close_matches
 
-DATABASE_URL = "sqlite:///egg_database.db"
+DATABASE_URL = "mysql+pymysql://root:Sunfra%40123@localhost:3306/egg_ai_agent"
 
 engine = create_engine(
     DATABASE_URL,
@@ -17,7 +17,6 @@ SessionLocal = sessionmaker(
     autoflush=False,
     bind=engine, 
     expire_on_commit=False
-
 )
 
 def create_database():
@@ -1294,22 +1293,3 @@ def get_feed_totals_kg():
         round(total_used, 2),
         round(total_remaining, 2)
     )
-
-# def get_daily_summary(report_date):
-
-#     session = SessionLocal()
-
-#     try:
-#         records = session.query(EggRecord)\
-#             .filter(
-#                 EggRecord.date == report_date
-#             )\
-#             .order_by(EggRecord.shed)\
-#             .all()
-
-#         return records
-
-#     finally:
-#         session.close()
-
-

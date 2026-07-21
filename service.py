@@ -1,5 +1,7 @@
 from datetime import date, timedelta
 from tabulate import tabulate 
+from report_generator import generate_daily_pdf
+
 from database import (
     add_production,
     add_broken,
@@ -53,6 +55,8 @@ def format_report_table(records):
 
     for record in records:
 
+        shed = record.shed_no or 0
+
         birds = record.birds or 0
         produced = record.produced or 0
         broken = record.broken or 0
@@ -62,7 +66,7 @@ def format_report_table(records):
 
         lines.append(
 
-            f"{record.shed_no:<5}"
+            f"{shed:<5}"
 
             f"{birds:>7}"
 
@@ -75,7 +79,6 @@ def format_report_table(records):
             f"{stock:>8}"
 
         )
-
     return "```\n" + "\n".join(lines) + "\n```"
 
 def format_summary_comparison_table(summary1, summary2, column1, column2):
@@ -2057,3 +2060,70 @@ def process_request(data):
             f"❌ Shed {data['shed']} does not exist.\n"
             "Valid sheds are 1 to 9."
         )
+    
+
+
+def generate_daily_pdf_report(report_date):
+
+    production_records = get_daily_summary(report_date)
+
+    feed_records = get_all_feeds(report_date)
+
+    medicine_records = get_all_medicines()
+
+    feed_totals = get_feed_totals_kg()
+
+    medicine_totals = get_medicine_totals_kg()
+
+    pending_reports = []
+
+    missing_sheds = get_missing_sheds(report_date)
+
+    for shed in missing_sheds:
+
+        pending_reports.append({
+
+            "shed": shed,
+
+            "missing": ["Report Not Submitted"]
+
+        })
+
+    missing_fields = get_missing_fields(report_date)
+
+    for shed, fields in missing_fields.items():
+
+        if shed in missing_sheds:
+            continue
+
+        pending_reports.append({
+
+            "shed": shed,
+
+            "missing": fields
+
+        })
+
+    report_data = {
+
+        "report_date": report_date,
+
+        "production_records": production_records,
+
+        "feed_records": feed_records,
+
+        "medicine_records": medicine_records,
+
+        "production_totals": {},
+
+        "feed_totals": feed_totals,
+
+        "medicine_totals": medicine_totals,
+
+        "pending_reports": pending_reports,
+
+    }
+
+    pdf_path = generate_daily_pdf(report_data)
+
+    return pdf_path
