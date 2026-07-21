@@ -26,15 +26,30 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         reply = process_request(data)
 
-        language = data.get("language", "en")
+        # If service returned a PDF
+        if isinstance(reply, dict) and reply.get("type") == "pdf":
 
-        reply = translate_response(
-            reply,
-            language
-        )
+            with open(reply["file"], "rb") as pdf:
 
-        await update.message.reply_text(reply ,parse_mode=ParseMode.MARKDOWN)
+                await update.message.reply_document(
+                    document=pdf,
+                    caption="📄 Sunfra Farm Report"
+                )
 
+        # Otherwise send normal text response
+        else:
+
+            language = data.get("language", "en")
+
+            reply = translate_response(
+                reply,
+                language
+            )
+
+            await update.message.reply_text(
+                reply,
+                parse_mode=ParseMode.MARKDOWN
+            )
     except Exception as e:
         print(e)
         await update.message.reply_text(

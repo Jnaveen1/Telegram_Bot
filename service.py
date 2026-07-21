@@ -2055,14 +2055,60 @@ def process_request(data):
             f"Used : {record['used']} {record['unit']}"
         )
     
+    elif intent == "generate_pdf":
+
+        from report_generator import generate_daily_pdf_report
+
+        report_date = get_report_date(data)
+
+        pdf_path = generate_daily_pdf_report(report_date)
+
+        return {
+            "type": "pdf",
+            "file": pdf_path
+        }
+
+    elif intent == "generate_weekly_pdf":
+
+        from report_generator import generate_weekly_pdf_report
+
+        period = data.get("date")
+
+        if period == "last_week":
+            pdf_path = generate_weekly_pdf_report("last_week")
+        else:
+            pdf_path = generate_weekly_pdf_report("this_week")
+
+        return {
+            "type": "pdf",
+            "file": pdf_path
+        }
+
+    elif intent == "generate_monthly_pdf":
+
+        from report_generator import generate_monthly_pdf_report
+
+        report_period = data.get("date")
+
+        if report_period == "last_month":
+
+            pdf_path = generate_monthly_pdf_report("last_month")
+
+        else:
+
+            pdf_path = generate_monthly_pdf_report("this_month")
+
+        return {
+            "type": "pdf",
+            "file": pdf_path
+        }
+
     elif intent == "invalid_shed":
         return (
             f"❌ Shed {data['shed']} does not exist.\n"
             "Valid sheds are 1 to 9."
         )
     
-
-
 def generate_daily_pdf_report(report_date):
 
     production_records = get_daily_summary(report_date)

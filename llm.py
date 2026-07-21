@@ -44,6 +44,10 @@ def understand_message(message):
 
         If the user wants to add production, broken, or sold eggs but does not specify a shed number, return:
 
+        If the user asks "today report" or "today summary", return get_daily_summary.
+
+        If the user asks for a report "in PDF", "as PDF", "pdf report", or "generate pdf", return generate_pdf.
+
         {{
             "intent":"add_production",
             "shed":null,
@@ -54,8 +58,6 @@ def understand_message(message):
         }}
 
         Do not guess the shed number.
-
-
 
         Convert the user message into JSON.
 
@@ -131,6 +133,9 @@ def understand_message(message):
         - get_feed
         - get_feed_remaining
         - get_feed_used
+        - get_medicine_summary
+        - generate_pdf
+        - generate_weekly_pdf
 
         Return ONLY JSON.
 
@@ -1488,6 +1493,89 @@ def understand_message(message):
             "intent":"invalid_shed",
             "shed":10,
             "message":"Invalid shed number"
+        }}
+
+        User: today report in pdf
+
+        Output:
+        {{
+            "intent":"generate_pdf",
+            "shed":null,
+            "quantity":null,
+            "date":"today",
+            "feed_name":null,
+            "medicine_name":null,
+            "language":"en"
+        }}
+
+        User: yesterday report pdf
+
+        Output:
+        {{
+            "intent":"generate_pdf",
+            "shed":null,
+            "quantity":null,
+            "date":"yesterday",
+            "feed_name":null,
+            "medicine_name":null,
+            "language":"en"
+        }}
+
+        User: generate today's report as pdf
+
+        Output:
+        {{
+            "intent":"generate_pdf",
+            "shed":null,
+            "quantity":null,
+            "date":"today",
+            "feed_name":null,
+            "medicine_name":null,
+            "language":"en"
+        }}
+
+        User: this week report in pdf
+
+        Output:
+        {{
+            "intent":"generate_weekly_pdf",
+            "shed":null,
+            "quantity":null,
+            "date":"this_week",
+            "feed_name":null,
+            "medicine_name":null,
+            "language":"en"
+        }}
+
+        User: weekly report pdf
+
+        Output:
+        {{
+            "intent":"generate_weekly_pdf",
+            "shed":null,
+            "quantity":null,
+            "date":"this_week",
+            "feed_name":null,
+            "medicine_name":null,
+            "language":"en"
+        }}
+
+        User:
+        this month report in pdf
+
+        Output:
+        {{
+            "intent": "generate_monthly_pdf",
+            "date": "this_month"
+        }}
+
+        User:
+        last month report in pdf
+
+        Output:
+        {{
+            "intent": "generate_monthly_pdf",
+            "date": "last_month"
         }}
 
         Now convert this:

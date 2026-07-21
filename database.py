@@ -1243,22 +1243,33 @@ def get_feed(report_date, shed_no, feed_name):
 
     return feed
 
-def get_all_feeds(report_date, shed_no=None):
+def get_all_feeds(start_date, end_date=None, shed_no=None):
 
     db = SessionLocal()
 
-    query = db.query(FeedStock).filter(
-        FeedStock.date == report_date
-    )
+    query = db.query(FeedStock)
+
+    if end_date is None:
+
+        query = query.filter(
+            FeedStock.date == start_date
+        )
+
+    else:
+
+        query = query.filter(
+            FeedStock.date >= str(start_date),
+            FeedStock.date <= str(end_date)
+        )
 
     if shed_no is not None:
 
         query = query.filter(
-            FeedStock.date == report_date, 
             FeedStock.shed_no == shed_no
         )
 
     feeds = query.order_by(
+        FeedStock.date,
         FeedStock.shed_no,
         FeedStock.feed_name
     ).all()
@@ -1293,3 +1304,47 @@ def get_feed_totals_kg():
         round(total_used, 2),
         round(total_remaining, 2)
     )
+
+def get_monthly_feeds(period):
+
+    db = SessionLocal()
+
+    today = date.today()
+
+    if period == "this_month":
+
+        start_date = today.replace(day=1)
+        end_date = today
+
+    elif period == "last_month":
+
+        first_day_this_month = today.replace(day=1)
+
+        end_date = first_day_this_month - timedelta(days=1)
+
+        start_date = end_date.replace(day=1)
+
+    else:
+
+        db.close()
+        return []
+
+    feeds = (
+        db.query(FeedStock)
+        .filter(
+            FeedStock.date >= str(start_date),
+            FeedStock.date <= str(end_date)
+        )
+        .order_by(
+            FeedStock.date,
+            FeedStock.shed_no,
+            FeedStock.feed_name
+        )
+        .all()
+    )
+
+    db.close()
+
+    return feeds
+
+
