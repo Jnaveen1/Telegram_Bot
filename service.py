@@ -2108,6 +2108,24 @@ def process_request(data):
             f"❌ Shed {data['shed']} does not exist.\n"
             "Valid sheds are 1 to 9."
         )
+
+    elif intent == "generate_shed_pdf":
+
+        from report_generator import generate_shed_pdf_report
+
+        shed_no = data.get("shed")
+
+        period = data.get("date", "today")
+
+        pdf_path = generate_shed_pdf_report(
+            shed_no,
+            period
+        )
+
+        return {
+            "type": "pdf",
+            "file": pdf_path
+        }
     
 def generate_daily_pdf_report(report_date):
 

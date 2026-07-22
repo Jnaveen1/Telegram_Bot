@@ -583,13 +583,20 @@ def generate_daily_pdf(report_data):
 from database import (
     get_daily_summary,
     get_weekly_summary,
+    get_monthly_summary ,
+
     get_all_feeds,
     get_all_medicines,
     get_feed_totals_kg,
     get_medicine_totals_kg,
     get_missing_fields , 
-    get_monthly_summary , 
-    get_monthly_feeds
+     
+    get_monthly_feeds , 
+    get_shed_daily_summary , 
+
+    get_shed_daily_summary,
+    get_shed_weekly_summary,
+    get_shed_monthly_summary,
 )
 
 def generate_daily_pdf_report(report_date):
@@ -1009,6 +1016,13 @@ def generate_weekly_pdf(report_data):
 
     elements.append(Spacer(1, 10))
 
+    elements.append(
+            Paragraph(
+                "<b><font size=14 color='#0B6E4F'>Current Feed Inventory</font></b>",
+                heading_style,
+            )
+    )
+
     available, used, remaining = feed_totals
 
     feed_total_table = Table(   
@@ -1053,7 +1067,7 @@ def generate_weekly_pdf(report_data):
 
     elements.append(
         Paragraph(
-            "<b><font size=14 color='#0B6E4F'>Medicine Inventory</font></b>",
+            "<b><font size=14 color='#0B6E4F'>Current Medicine Inventory</font></b>",
             heading_style,
         )
     )
@@ -1287,4 +1301,119 @@ def generate_monthly_pdf_report(period):
 
     return generate_weekly_pdf(report_data)
 
+def generate_shed_pdf_report(shed_no, period):
 
+    if period == "today":
+
+        report_date = date.today().strftime("%Y-%m-%d")
+
+        record = get_shed_daily_summary(
+            report_date,
+            shed_no
+        )
+
+        production_records = []
+
+        if record:
+            production_records.append(record)
+
+        feed_records = get_all_feeds(
+            report_date,
+            shed_no=shed_no
+        )
+
+        report_title = f"Today's Shed {shed_no} Report"
+
+    elif period in ["this_week", "last_week"]:
+
+        production_records = get_shed_weekly_summary(
+            period,
+            shed_no
+        )
+
+        today = date.today()
+
+        if period == "last_week":
+
+            this_week_start = today - timedelta(days=today.weekday())
+
+            start_date = this_week_start - timedelta(days=7)
+
+            end_date = this_week_start - timedelta(days=1)
+
+            report_title = f"Last Week Shed {shed_no} Report"
+
+        else:
+
+            start_date = today - timedelta(days=today.weekday())
+
+            end_date = today
+
+            report_title = f"This Week Shed {shed_no} Report"
+
+        feed_records = get_all_feeds(
+            start_date,
+            end_date,
+            shed_no
+        )
+
+    elif period in ["this_month", "last_month"]:
+
+        production_records = get_shed_monthly_summary(
+            period,
+            shed_no
+        )
+
+        today = date.today()
+
+        if period == "last_month":
+
+            first_day = today.replace(day=1)
+
+            end_date = first_day - timedelta(days=1)
+
+            start_date = end_date.replace(day=1)
+
+            report_title = f"Last Month Shed {shed_no} Report"
+
+        else:
+
+            start_date = today.replace(day=1)
+
+            end_date = today
+
+            report_title = f"This Month Shed {shed_no} Report"
+
+        feed_records = get_all_feeds(
+            start_date,
+            end_date,
+            shed_no
+        )
+
+    medicine_records = get_all_medicines()
+
+    feed_totals = get_feed_totals_kg()
+
+    medicine_totals = get_medicine_totals_kg()
+
+    report_data = {
+
+        "report_date": report_title,
+
+        "production_records": production_records,
+
+        "feed_records": feed_records,
+
+        "medicine_records": medicine_records,
+
+        "production_totals": {},
+
+        "feed_totals": feed_totals,
+
+        "medicine_totals": medicine_totals,
+
+        "pending_reports": []
+
+    }
+
+    return generate_weekly_pdf(report_data)

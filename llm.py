@@ -1578,6 +1578,212 @@ def understand_message(message):
             "date": "last_month"
         }}
 
+        ==========================
+        PDF REPORT INTENTS
+        ==========================
+
+        1. Farm Daily PDF
+
+        Examples:
+        - today's report in pdf
+        - yesterday report in pdf
+        - 20 july report in pdf
+
+        Output:
+
+        User: today's report in pdf
+
+        {{
+            "intent": "generate_pdf",
+            "shed": null,
+            "quantity": null,
+            "date": "today",
+            "feed_name": null,
+            "medicine_name": null,
+            "language": "en"
+        }}
+
+        User: yesterday report in pdf
+
+        {{
+            "intent": "generate_pdf",
+            "shed": null,
+            "quantity": null,
+            "date": "yesterday",
+            "feed_name": null,
+            "medicine_name": null,
+            "language": "en"
+        }}
+
+        --------------------------------------------------
+
+        2. Farm Weekly PDF
+
+        Examples:
+        - this week report in pdf
+        - last week report in pdf
+
+        Output:
+
+        User: this week report in pdf
+
+        {{
+            "intent": "generate_weekly_pdf",
+            "shed": null,
+            "quantity": null,
+            "date": "this_week",
+            "feed_name": null,
+            "medicine_name": null,
+            "language": "en"
+        }}
+
+        User: last week report in pdf
+
+        {{
+            "intent": "generate_weekly_pdf",
+            "shed": null,
+            "quantity": null,
+            "date": "last_week",
+            "feed_name": null,
+            "medicine_name": null,
+            "language": "en"
+        }}
+
+        --------------------------------------------------
+
+        3. Farm Monthly PDF
+
+        Examples:
+        - this month report in pdf
+        - last month report in pdf
+
+        Output:
+
+        User: this month report in pdf
+
+        {{
+            "intent": "generate_monthly_pdf",
+            "shed": null,
+            "quantity": null,
+            "date": "this_month",
+            "feed_name": null,
+            "medicine_name": null,
+            "language": "en"
+        }}
+
+        User: last month report in pdf
+
+        {{
+            "intent": "generate_monthly_pdf",
+            "shed": null,
+            "quantity": null,
+            "date": "last_month",
+            "feed_name": null,
+            "medicine_name": null,
+            "language": "en"
+        }}
+        --------------------------------------------------
+
+        4. Shed PDF Reports
+
+        Use this intent whenever the user asks for a PDF report of a specific shed.
+
+        Examples:
+
+        - today's shed 1 report in pdf
+        - yesterday shed 3 report in pdf
+        - shed 2 report in pdf
+        - this week shed 4 report in pdf
+        - last week shed 6 report in pdf
+        - this month shed 5 report in pdf
+        - last month shed 7 report in pdf
+
+        Output:
+
+        User: today's shed 1 report in pdf
+
+        {{
+            "intent": "generate_shed_pdf",
+            "shed": 1,
+            "quantity": null,
+            "date": "today",
+            "feed_name": null,
+            "medicine_name": null,
+            "language": "en"
+        }}
+
+        User: yesterday shed 3 report in pdf
+
+        {{
+            "intent": "generate_shed_pdf",
+            "shed": 3,
+            "quantity": null,
+            "date": "yesterday",
+            "feed_name": null,
+            "medicine_name": null,
+            "language": "en"
+        }}
+
+        User: shed 2 report in pdf
+
+        {{
+            "intent": "generate_shed_pdf",
+            "shed": 2,
+            "quantity": null,
+            "date": "today",
+            "feed_name": null,
+            "medicine_name": null,
+            "language": "en"
+        }}
+
+        User: this week shed 4 report in pdf
+
+        {{
+            "intent": "generate_shed_pdf",
+            "shed": 4,
+            "quantity": null,
+            "date": "this_week",
+            "feed_name": null,
+            "medicine_name": null,
+            "language": "en"
+        }}
+
+        User: last week shed 6 report in pdf
+
+        {{
+            "intent": "generate_shed_pdf",
+            "shed": 6,
+            "quantity": null,
+            "date": "last_week",
+            "feed_name": null,
+            "medicine_name": null,
+            "language": "en"
+        }}
+
+        User: this month shed 5 report in pdf
+
+        {{
+            "intent": "generate_shed_pdf",
+            "shed": 5,
+            "quantity": null,
+            "date": "this_month",
+            "feed_name": null,
+            "medicine_name": null,
+            "language": "en"
+        }}
+        
+        User: last month shed 7 report in pdf
+
+        {{
+            "intent": "generate_shed_pdf",
+            "shed": 7,
+            "quantity": null,
+            "date": "last_month",
+            "feed_name": null,
+            "medicine_name": null,
+            "language": "en"
+        }}
+
         Now convert this:
 
         {message}

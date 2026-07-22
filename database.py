@@ -1347,4 +1347,97 @@ def get_monthly_feeds(period):
 
     return feeds
 
+def get_shed_daily_summary(report_date, shed_no):
+
+    db = SessionLocal()
+
+    record = (
+        db.query(EggRecord)
+        .filter(
+            EggRecord.date == report_date,
+            EggRecord.shed_no == shed_no
+        )
+        .first()
+    )
+
+    db.close()
+
+    return record
+
+def get_shed_weekly_summary(period, shed_no):
+
+    db = SessionLocal()
+
+    today = date.today()
+
+    if period == "last_week":
+
+        this_week_start = today - timedelta(days=today.weekday())
+
+        start_date = this_week_start - timedelta(days=7)
+
+        end_date = this_week_start - timedelta(days=1)
+
+    else:
+
+        start_date = today - timedelta(days=today.weekday())
+
+        end_date = today
+
+    records = (
+        db.query(EggRecord)
+        .filter(
+            EggRecord.date >= str(start_date),
+            EggRecord.date <= str(end_date),
+            EggRecord.shed_no == shed_no
+        )
+        .order_by(EggRecord.date)
+        .all()
+    )
+
+    db.close()
+
+    return records
+
+def get_shed_monthly_summary(period, shed_no):
+
+    db = SessionLocal()
+
+    today = date.today()
+
+    if period == "this_month":
+
+        start_date = today.replace(day=1)
+
+        end_date = today
+
+    elif period == "last_month":
+
+        first_day_this_month = today.replace(day=1)
+
+        end_date = first_day_this_month - timedelta(days=1)
+
+        start_date = end_date.replace(day=1)
+
+    else:
+
+        db.close()
+
+        return []
+
+    records = (
+        db.query(EggRecord)
+        .filter(
+            EggRecord.date >= str(start_date),
+            EggRecord.date <= str(end_date),
+            EggRecord.shed_no == shed_no
+        )
+        .order_by(EggRecord.date)
+        .all()
+    )
+
+    db.close()
+
+    return records
+
 
