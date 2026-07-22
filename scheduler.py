@@ -77,8 +77,8 @@ scheduler.add_job(
 scheduler.add_job(
     lambda: asyncio.run(send_daily_pdf()),
     trigger="cron",
-    hour=12,
-    minute=35
+    hour=15,
+    minute=3
 )
 
 scheduler.start()

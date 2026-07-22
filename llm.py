@@ -654,6 +654,22 @@ def understand_message(message):
             "unit":"egg"
         }}
 
+        User: this week shed 1 data
+        Output:
+        {{
+        "intent":"get_weekly_summary",
+        "shed":1,
+        "date":"this_week"
+        }}
+
+        User: last week shed 2 summary
+        Output:
+        {{
+        "intent":"get_weekly_summary",
+        "shed":2,
+        "date":"last_week"
+        }}
+
         User:
         Monthly summary / This month report / Last month Summary report . 
 
@@ -1771,7 +1787,7 @@ def understand_message(message):
             "medicine_name": null,
             "language": "en"
         }}
-        
+
         User: last month shed 7 report in pdf
 
         {{
@@ -1782,6 +1798,90 @@ def understand_message(message):
             "feed_name": null,
             "medicine_name": null,
             "language": "en"
+        }}
+        
+        User:
+        Compare today and yesterday in PDF
+        Output:
+        {{
+        "intent":"compare_report_pdf",
+        "comparison":"day",
+        "shed":null,
+        "quantity":null,
+        "date":null,
+        "feed_name":null,
+        "medicine_name":null,
+        "language":"en"
+        }}
+
+        User:
+        Compare this week and last week in PDF
+        Output:
+        {{
+        "intent":"compare_report_pdf",
+        "comparison":"week",
+        "shed":null,
+        "quantity":null,
+        "date":null,
+        "feed_name":null,
+        "medicine_name":null,
+        "language":"en"
+        }}
+
+        User:
+        Compare this month and last month in PDF
+        Output:
+        {{
+        "intent":"compare_report_pdf",
+        "comparison":"month",
+        "shed":null,
+        "quantity":null,
+        "date":null,
+        "feed_name":null,
+        "medicine_name":null,
+        "language":"en"
+        }}
+
+        User:
+        Compare Shed 1 today and yesterday in PDF
+        Output:
+        {{
+        "intent":"compare_report_pdf",
+        "comparison":"day",
+        "shed":1,
+        "quantity":null,
+        "date":null,
+        "feed_name":null,
+        "medicine_name":null,
+        "language":"en"
+        }}
+
+        User:
+        Compare Shed 1 this week and last week in PDF
+        Output:
+        {{
+        "intent":"compare_report_pdf",
+        "comparison":"week",
+        "shed":1,
+        "quantity":null,
+        "date":null,
+        "feed_name":null,
+        "medicine_name":null,
+        "language":"en"
+        }}
+
+        User:
+        Compare Shed 1 this month and last month in PDF
+        Output:
+        {{
+        "intent":"compare_report_pdf",
+        "comparison":"month",
+        "shed":1,
+        "quantity":null,
+        "date":null,
+        "feed_name":null,
+        "medicine_name":null,
+        "language":"en"
         }}
 
         Now convert this:

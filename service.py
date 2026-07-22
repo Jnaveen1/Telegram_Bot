@@ -41,6 +41,12 @@ from database import (
     get_feed,
     get_all_feeds,
     get_feed_totals_kg,
+    get_day_comparison,
+    get_week_comparison,
+    get_month_comparison , 
+    get_shed_weekly_summary , 
+    get_shed_monthly_summary
+
 )
 
 def format_report_table(records):
@@ -613,24 +619,90 @@ def process_request(data):
                 "Example: 'Give summary of shed 1'."
             )
 
+
+        period = data.get("date")
+
+
+        # Weekly handling
+        if period in ["this_week", "last_week"]:
+
+            records = get_shed_weekly_summary(
+                period,
+                shed
+            )
+
+
+            if not records:
+                return (
+                    f"No data found for Shed {shed} "
+                    f"for {period.replace('_',' ')}."
+                )
+
+
+            total_produced = 0
+            total_broken = 0
+            total_sold = 0
+            total_mortality = 0
+
+
+            for record in records:
+
+                total_produced += _safe_number(record.produced)
+                total_broken += _safe_number(record.broken)
+                total_sold += _safe_number(record.sold)
+                total_mortality += _safe_number(record.mortality)
+
+
+            stock = (
+                total_produced -
+                total_broken -
+                total_sold
+            )
+
+
+            return (
+                f"📊 Shed {shed} "
+                f"{period.replace('_',' ').title()} Summary\n\n"
+
+                f"🥚 Produced   : {total_produced}\n"
+                f"❌ Broken     : {total_broken}\n"
+                f"📦 Sold       : {total_sold}\n"
+                f"📦 Stock      : {stock}\n"
+                f"💀 Mortality  : {total_mortality}"
+            )
+
+
+
+        # Daily handling (existing logic)
+
         report_date = get_report_date(data)
 
-        record = get_summary(shed, report_date)
+
+        record = get_summary(
+            shed,
+            report_date
+        )
+
 
         if record is None:
-            return f"No data found for Shed {shed} on {report_date}."
+            return (
+                f"No data found for Shed {shed} "
+                f"on {report_date}."
+            )
+
 
         produced = _safe_number(record.produced)
         broken = _safe_number(record.broken)
         sold = _safe_number(record.sold)
 
+
         stock = produced - broken - sold
+
 
         return (
             f"📊 Shed {shed} Summary ({report_date})\n\n"
             f"🐔 Birds       : {record.birds}\n"
             f"💀 Mortality  : {record.mortality}\n"
-            # f"🌾 Feed       : {record.feed} kg\n\n"
             f"🥚 Produced   : {record.produced}\n"
             f"❌ Broken     : {record.broken}\n"
             f"📦 Sold       : {record.sold}\n"
@@ -1122,27 +1194,75 @@ def process_request(data):
 
         period = data.get("date", "this_week")
 
-        records = get_weekly_summary(period)
+        shed_no = data.get("shed")
 
-        if period == "last_week":
-            title = "📅 Last Week Report"
+
+        if shed_no:
+
+            records = get_shed_weekly_summary(
+                period,
+                shed_no
+            )
+
+            title = (
+                f"📅 Shed {shed_no} "
+                f"{period.replace('_',' ').title()} Report"
+            )
+
+
         else:
-            title = "📅 This Week Report"
 
-        return generate_period_summary(records, title)
+            records = get_weekly_summary(
+                period
+            )
+
+            if period == "last_week":
+                title = "📅 Last Week Report"
+            else:
+                title = "📅 This Week Report"
+
+
+        return generate_period_summary(
+            records,
+            title
+        )
 
     elif intent == "get_monthly_summary":
 
-        period = data["date"]
+        period = data.get("date", "this_month")
 
-        records = get_monthly_summary(period)
+        shed_no = data.get("shed")
 
-        if period == "this_month":
-            title = "📊 This Month Summary"
+        if shed_no:
+
+            records = get_shed_monthly_summary(
+                period,
+                shed_no
+            )
+
+            title = (
+                f"📊 Shed {shed_no} "
+                f"{period.replace('_',' ').title()} Summary"
+            )
+
+
         else:
-            title = "📊 Last Month Summary"
 
-        return generate_period_summary(records, title)
+            records = get_monthly_summary(
+                period
+            )
+
+
+            if period == "last_month":
+                title = "📊 Last Month Summary"
+            else:
+                title = "📊 This Month Summary"
+
+
+        return generate_period_summary(
+            records,
+            title
+        )
 
     elif intent == "move_record":
 
@@ -2125,6 +2245,78 @@ def process_request(data):
         return {
             "type": "pdf",
             "file": pdf_path
+        }
+
+    elif intent == "compare_report":
+
+        comparison = data.get("comparison")
+        shed_no = data.get("shed")
+
+        if comparison == "day":
+            result = get_day_comparison(shed_no)
+
+        elif comparison == "week":
+            result = get_week_comparison(shed_no)
+
+        elif comparison == "month":
+            result = get_month_comparison(shed_no)
+
+        else:
+            return "Invalid comparison period."
+
+        current = result["current"]
+        previous = result["previous"]
+
+        title = "📊 Comparison Report"
+
+        if shed_no:
+            title += f" (Shed {shed_no})"
+
+        message = (
+            f"{title}\n\n"
+
+            f"🥚 Produced\n"
+            f"Current : {current['produced']}\n"
+            f"Previous: {previous['produced']}\n\n"
+
+            f"💥 Broken\n"
+            f"Current : {current['broken']}\n"
+            f"Previous: {previous['broken']}\n\n"
+
+            f"🛒 Sold\n"
+            f"Current : {current['sold']}\n"
+            f"Previous: {previous['sold']}\n\n"
+
+            f"🐔 Mortality\n"
+            f"Current : {current['mortality']}\n"
+            f"Previous: {previous['mortality']}\n\n"
+
+            f"🐥 Birds\n"
+            f"Current : {current['birds']}\n"
+            f"Previous: {previous['birds']}"
+        )
+
+        return message
+
+    elif intent == "compare_report_pdf":
+
+        from report_generator import generate_comparison_pdf_report
+
+        comparison = data.get("comparison")
+
+        shed_no = data.get("shed")
+
+        pdf_path = generate_comparison_pdf_report(
+            comparison,
+            shed_no
+        )
+
+        return {
+
+            "type": "pdf",
+
+            "file": pdf_path
+
         }
     
 def generate_daily_pdf_report(report_date):

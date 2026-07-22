@@ -28,6 +28,7 @@ heading_style = styles["Heading2"]
 
 normal_style = styles["BodyText"]
 
+from datetime import date, timedelta
 
 def generate_daily_pdf(report_data):
 
@@ -597,6 +598,10 @@ from database import (
     get_shed_daily_summary,
     get_shed_weekly_summary,
     get_shed_monthly_summary,
+
+    get_day_comparison,
+    get_week_comparison ,
+    get_month_comparison , 
 )
 
 def generate_daily_pdf_report(report_date):
@@ -1417,3 +1422,280 @@ def generate_shed_pdf_report(shed_no, period):
     }
 
     return generate_weekly_pdf(report_data)
+
+def generate_comparison_pdf_report(comparison, shed_no=None):
+    if comparison == "day":
+
+        result = get_day_comparison(shed_no)
+
+        title = "Today vs Yesterday"
+
+    elif comparison == "week":
+
+        result = get_week_comparison(shed_no)
+
+        title = "This Week vs Last Week"
+
+    elif comparison == "month":
+
+        result = get_month_comparison(shed_no)
+
+        title = "This Month vs Last Month"
+
+    current = result["current"]
+
+    previous = result["previous"]
+
+    report_data = {
+
+        "title": title,
+
+        "shed": shed_no,
+
+        "current": current,
+
+        "previous": previous
+
+    }
+
+    return generate_comparison_pdf(report_data)
+
+def generate_shed_pdf_report(shed_no, period):
+
+    report_title = None
+    production_records = []
+    feed_records = []
+
+    # ---------------- TODAY ----------------
+    if period == "today":
+
+        report_date = date.today().strftime("%Y-%m-%d")
+
+        record = get_shed_daily_summary(
+            report_date,
+            shed_no
+        )
+
+        if record:
+            production_records.append(record)
+
+
+        feed_records = get_all_feeds(
+            report_date,
+            shed_no=shed_no
+        )
+
+
+        report_title = f"Today's Shed {shed_no} Report"
+
+    # ---------------- YESTERDAY ----------------
+    elif period == "yesterday":
+
+        yesterday = (
+            date.today() - timedelta(days=1)
+        )
+
+        report_date = yesterday.strftime("%Y-%m-%d")
+
+
+        record = get_shed_daily_summary(
+            report_date,
+            shed_no
+        )
+
+
+        if record:
+            production_records.append(record)
+
+
+        feed_records = get_all_feeds(
+            report_date,
+            shed_no=shed_no
+        )
+
+
+        report_title = f"Yesterday's Shed {shed_no} Report"
+
+    # ---------------- WEEK ----------------
+    elif period in ["this_week", "last_week"]:
+
+
+        production_records = get_shed_weekly_summary(
+            period,
+            shed_no
+        )
+
+
+        today = date.today()
+
+        if period == "last_week":
+            this_week_start = (
+                today - timedelta(days=today.weekday())
+            )
+
+
+            start_date = (
+                this_week_start - timedelta(days=7)
+            )
+
+
+            end_date = (
+                this_week_start - timedelta(days=1)
+            )
+
+            report_title = (
+                f"Last Week Shed {shed_no} Report"
+            )
+        else:
+            start_date = (
+                today - timedelta(days=today.weekday())
+            )
+            end_date = today
+            report_title = (
+                f"This Week Shed {shed_no} Report"
+            )
+
+        feed_records = get_all_feeds(
+            start_date,
+            end_date,
+            shed_no
+        )
+
+
+
+    # ---------------- MONTH ----------------
+    elif period in ["this_month", "last_month"]:
+
+
+        production_records = get_shed_monthly_summary(
+            period,
+            shed_no
+        )
+
+
+        today = date.today()
+
+
+        if period == "last_month":
+
+
+            first_day = today.replace(day=1)
+
+
+            end_date = (
+                first_day - timedelta(days=1)
+            )
+
+
+            start_date = (
+                end_date.replace(day=1)
+            )
+
+
+            report_title = (
+                f"Last Month Shed {shed_no} Report"
+            )
+
+
+        else:
+
+
+            start_date = today.replace(day=1)
+
+            end_date = today
+
+
+            report_title = (
+                f"This Month Shed {shed_no} Report"
+            )
+
+
+
+        feed_records = get_all_feeds(
+            start_date,
+            end_date,
+            shed_no
+        )
+
+
+
+    # ---------------- CUSTOM DATE ----------------
+    else:
+
+
+        # Example:
+        # 2026-07-11 shed 2 pdf
+
+
+        report_date = period
+
+
+        record = get_shed_daily_summary(
+            report_date,
+            shed_no
+        )
+
+
+        if record:
+            production_records.append(record)
+
+
+        feed_records = get_all_feeds(
+            report_date,
+            shed_no=shed_no
+        )
+
+
+        report_title = (
+            f"Shed {shed_no} Report ({report_date})"
+        )
+
+
+
+    # ---------------- COMMON DATA ----------------
+
+    medicine_records = get_all_medicines()
+
+
+    feed_totals = get_feed_totals_kg()
+
+
+    medicine_totals = get_medicine_totals_kg()
+
+
+
+    report_data = {
+
+
+        "report_date": report_title,
+
+
+        "production_records": production_records,
+
+
+        "feed_records": feed_records,
+
+
+        "medicine_records": medicine_records,
+
+
+        "production_totals": {},
+
+
+        "feed_totals": feed_totals,
+
+
+        "medicine_totals": medicine_totals,
+
+
+        "pending_reports": []
+
+    }
+
+
+
+    return generate_weekly_pdf(report_data)
+
+
+
+
