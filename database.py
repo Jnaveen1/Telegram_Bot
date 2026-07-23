@@ -1,7 +1,7 @@
 from sqlalchemy import create_engine , func , or_
 from sqlalchemy.orm import sessionmaker
 from base import Base
-from datetime import date , timedelta
+from datetime import date , timedelta , datetime 
 from models import EggRecord , MedicineStock, FeedStock
 from difflib import get_close_matches
 
@@ -1604,13 +1604,23 @@ def get_month_comparison(shed_no=None):
 
     }
 
-def get_day_comparison(shed_no=None):
+def get_day_comparison(compare_date=None, shed_no=None):
+    print("Database compare_date:", compare_date)
 
     db = SessionLocal()
 
-    today = date.today()
+    if compare_date:
 
-    yesterday = today - timedelta(days=1)
+        current_date = datetime.strptime(
+            compare_date,
+            "%Y-%m-%d"
+        ).date()
+
+    else:
+
+        current_date = date.today()
+
+    previous_date = current_date - timedelta(days=1)
 
     current_query = db.query(
         func.sum(EggRecord.produced),
@@ -1619,7 +1629,7 @@ def get_day_comparison(shed_no=None):
         func.sum(EggRecord.mortality),
         func.sum(EggRecord.birds)
     ).filter(
-        EggRecord.date == str(today)
+        EggRecord.date == str(current_date)
     )
 
     previous_query = db.query(
@@ -1629,7 +1639,7 @@ def get_day_comparison(shed_no=None):
         func.sum(EggRecord.mortality),
         func.sum(EggRecord.birds)
     ).filter(
-        EggRecord.date == str(yesterday)
+        EggRecord.date == str(previous_date)
     )
 
     if shed_no is not None:
@@ -1680,4 +1690,83 @@ def get_day_comparison(shed_no=None):
 
     }
 
+def get_day_comparison_between_dates(date1, date2, shed_no=None):
 
+    db = SessionLocal()
+
+    # Convert "today" to actual date
+    if date1 == "today":
+        current_date = date.today()
+    else:
+        current_date = datetime.strptime(
+            date1,
+            "%Y-%m-%d"
+        ).date()
+
+    if date2 == "today":
+        previous_date = date.today()
+    else:
+        previous_date = datetime.strptime(
+            date2,
+            "%Y-%m-%d"
+        ).date()
+
+    current_query = db.query(
+        func.sum(EggRecord.produced),
+        func.sum(EggRecord.broken),
+        func.sum(EggRecord.sold),
+        func.sum(EggRecord.mortality),
+        func.sum(EggRecord.birds)
+    ).filter(
+        EggRecord.date == str(current_date)
+    )
+
+    previous_query = db.query(
+        func.sum(EggRecord.produced),
+        func.sum(EggRecord.broken),
+        func.sum(EggRecord.sold),
+        func.sum(EggRecord.mortality),
+        func.sum(EggRecord.birds)
+    ).filter(
+        EggRecord.date == str(previous_date)
+    )
+
+    if shed_no is not None:
+
+        current_query = current_query.filter(
+            EggRecord.shed_no == shed_no
+        )
+
+        previous_query = previous_query.filter(
+            EggRecord.shed_no == shed_no
+        )
+
+    current = current_query.first()
+
+    previous = previous_query.first()
+
+    db.close()
+
+    return {
+
+        "current": {
+
+            "produced": current[0] or 0,
+            "broken": current[1] or 0,
+            "sold": current[2] or 0,
+            "mortality": current[3] or 0,
+            "birds": current[4] or 0
+
+        },
+
+        "previous": {
+
+            "produced": previous[0] or 0,
+            "broken": previous[1] or 0,
+            "sold": previous[2] or 0,
+            "mortality": previous[3] or 0,
+            "birds": previous[4] or 0
+
+        }
+
+    }

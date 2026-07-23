@@ -2304,11 +2304,21 @@ def process_request(data):
 
         comparison = data.get("comparison")
 
+        date1 = data.get("date1")
+
+        date2 = data.get("date2")
+
         shed_no = data.get("shed")
 
+        print("Comparison :", comparison)
+        print("Date1 :", date1)
+        print("Date2 :", date2)
+
         pdf_path = generate_comparison_pdf_report(
-            comparison,
-            shed_no
+            comparison=comparison,
+            date1=date1,
+            date2=date2,
+            shed_no=shed_no
         )
 
         return {
@@ -2318,7 +2328,8 @@ def process_request(data):
             "file": pdf_path
 
         }
-    
+
+
 def generate_daily_pdf_report(report_date):
 
     production_records = get_daily_summary(report_date)

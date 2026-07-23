@@ -1884,6 +1884,51 @@ def understand_message(message):
         "language":"en"
         }}
 
+        User:
+        Compare today and 15th July in PDF
+        Output:
+        {{
+        "intent":"compare_report_pdf",
+        "comparison":"custom_day",
+        "shed":null,
+        "quantity":null,
+        "date1":"today",
+        "date2":"2026-07-15",
+        "feed_name":null,
+        "medicine_name":null,
+        "language":"en"
+        }}
+
+        User:
+        Compare 10th July and 15th July in PDF
+        Output:
+        {{
+        "intent":"compare_report_pdf",
+        "comparison":"custom_day",
+        "shed":null,
+        "quantity":null,
+        "date1":"2026-07-10",
+        "date2":"2026-07-15",
+        "feed_name":null,
+        "medicine_name":null,
+        "language":"en"
+        }}
+
+        User:
+        Compare Shed 1 today and 15th July in PDF
+        Output:
+        {{
+        "intent":"compare_report_pdf",
+        "comparison":"custom_day",
+        "shed":1,
+        "quantity":null,
+        "date1":"today",
+        "date2":"2026-07-15",
+        "feed_name":null,
+        "medicine_name":null,
+        "language":"en"
+        }}
+
         Now convert this:
 
         {message}

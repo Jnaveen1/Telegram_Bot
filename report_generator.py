@@ -602,6 +602,7 @@ from database import (
     get_day_comparison,
     get_week_comparison ,
     get_month_comparison , 
+    get_day_comparison_between_dates
 )
 
 def generate_daily_pdf_report(report_date):
@@ -1423,12 +1424,198 @@ def generate_shed_pdf_report(shed_no, period):
 
     return generate_weekly_pdf(report_data)
 
-def generate_comparison_pdf_report(comparison, shed_no=None):
+def generate_comparison_pdf(report_data):
+
+    os.makedirs("reports", exist_ok=True)
+
+    filename = f"reports/Comparison_Report_{report_data['title'].replace(' ', '_')}.pdf"
+
+    doc = SimpleDocTemplate(
+        filename,
+        rightMargin=25,
+        leftMargin=25,
+        topMargin=25,
+        bottomMargin=25,
+    )
+
+    elements = []
+
+    # -----------------------------------
+    # Title
+    # -----------------------------------
+
+    title = Paragraph(
+        f"""
+        <font size="22" color="#0B6E4F">
+        <b>SUNFRA FARM</b>
+        </font><br/>
+        <font size="15">
+        Comparison Report
+        </font><br/><br/>
+        <font size="12">
+        {report_data['title']}
+        </font>
+        """,
+        title_style
+    )
+
+    elements.append(title)
+
+    elements.append(Spacer(1, 20))
+
+    if report_data["shed"] is not None:
+
+        elements.append(
+            Paragraph(
+                f"<b>Shed :</b> {report_data['shed']}",
+                normal_style
+            )
+        )
+
+        elements.append(Spacer(1, 10))
+
+    current = report_data["current"]
+    previous = report_data["previous"]
+
+    table_data = [
+        [
+            "Metric",
+            "Current",
+            "Previous",
+            "Difference"
+        ]
+    ]
+
+    metrics = [
+        ("Produced Eggs", "produced"),
+        ("Broken Eggs", "broken"),
+        ("Sold Eggs", "sold"),
+        ("Mortality", "mortality"),
+        ("Birds", "birds")
+    ]
+
+    for label, key in metrics:
+
+        current_value = current[key]
+        previous_value = previous[key]
+
+        difference = current_value - previous_value
+
+        table_data.append([
+            label,
+            current_value,
+            previous_value,
+            difference
+        ])
+
+    table = Table(
+        table_data,
+        colWidths=[170, 90, 90, 90]
+    )
+
+    table.setStyle(
+        TableStyle([
+
+            ("BACKGROUND", (0, 0), (-1, 0), HexColor("#0B6E4F")),
+            ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+
+            ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+
+            ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+
+            ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
+
+            ("BACKGROUND", (0, 1), (-1, -1), HexColor("#F8F8F8")),
+
+            ("BOTTOMPADDING", (0, 0), (-1, 0), 10),
+
+        ])
+    )
+
+    elements.append(table)
+
+    elements.append(Spacer(1, 20))
+
+    elements.append(
+        Paragraph(
+            "<b>Summary</b>",
+            heading_style
+        )
+    )
+
+    elements.append(Spacer(1, 10))
+
+    summary = []
+
+    for label, key in metrics:
+
+        diff = current[key] - previous[key]
+
+        if diff > 0:
+            text = f"{label} increased by {diff}"
+        elif diff < 0:
+            text = f"{label} decreased by {abs(diff)}"
+        else:
+            text = f"{label} remained unchanged"
+
+        summary.append(
+            Paragraph(f"• {text}", normal_style)
+        )
+
+    for line in summary:
+        elements.append(line)
+
+    elements.append(Spacer(1, 20))
+
+    elements.append(
+        Paragraph(
+            "<font color='grey'>Generated automatically by Sunfra Farm AI Assistant</font>",
+            normal_style
+        )
+    )
+
+    elements.append(
+        Paragraph(
+            "<font color='grey'>Confidential - Internal Farm Report</font>",
+            normal_style
+        )
+    )
+
+    doc.build(elements)
+
+    return filename
+
+def generate_comparison_pdf_report(
+    comparison,
+    date1=None,
+    date2=None,
+    shed_no=None
+):
+
     if comparison == "day":
 
-        result = get_day_comparison(shed_no)
+        result = get_day_comparison(
+            compare_date=None,
+            shed_no=shed_no
+        )
 
         title = "Today vs Yesterday"
+
+    elif comparison == "custom_day":
+
+        result = get_day_comparison_between_dates(
+            date1=date1,
+            date2=date2,
+            shed_no=shed_no
+        )
+
+        if shed_no:
+
+            title = f"Shed {shed_no}: {date1} vs {date2}"
+
+        else:
+
+            title = f"{date1} vs {date2}"
 
     elif comparison == "week":
 
@@ -1532,13 +1719,9 @@ def generate_shed_pdf_report(shed_no, period):
             this_week_start = (
                 today - timedelta(days=today.weekday())
             )
-
-
             start_date = (
                 this_week_start - timedelta(days=7)
             )
-
-
             end_date = (
                 this_week_start - timedelta(days=1)
             )
